@@ -212,13 +212,23 @@ public class TopologyBuilder {
 	 * @return Map from stream id to component id to the Grouping used.
 	 */
     public Map<String, Map<String, Grouping>> getTargets(String componentId) {
+    	System.out.println("In getTargets method");
         Map<String, Map<String, Grouping>> ret = new HashMap<String, Map<String, Grouping>>();
         for(String otherComponentId: getComponentIds()) {
-            Map<GlobalStreamId, Grouping> inputs = getComponentCommon(otherComponentId).get_inputs();
+        	System.out.println("Seeing if { " + otherComponentId + " } is our target.");
+        	ComponentCommon compCommon = getComponentCommon(otherComponentId);
+        	if(compCommon == null) {
+        		System.out.println("Found a null ComponentCommon for " + otherComponentId);
+        		continue;
+        	}
+            Map<GlobalStreamId, Grouping> inputs = compCommon.get_inputs();
             for(GlobalStreamId id: inputs.keySet()) {
+            	System.out.println("Checking for " + id.get_componentId() + "global stream ID");
                 if(id.get_componentId().equals(componentId)) {
+                	System.out.println("Yes this is our component Id");
                     Map<String, Grouping> curr = ret.get(id.get_streamId());
                     if(curr==null) {
+                    	System.out.println("Creating a new Map for this id");
                     	curr = new HashMap<String, Grouping>();
                     }
                     curr.put(otherComponentId, inputs.get(id));
@@ -253,11 +263,15 @@ public class TopologyBuilder {
 	 * @return {@link ComponentCommon}
 	 */
     public ComponentCommon getComponentCommon(String componentId) {
+    	System.out.println("In getComponentCommon for = " + componentId);
     	if(_spouts.containsKey(componentId)) {
+    		System.out.println("Found in spouts");
     		return getComponentCommon(componentId, _spouts.get(componentId));
     	}  else if (_bolts.containsKey(componentId)) {
+    		System.out.println("Found in bolts");
     		return getComponentCommon(componentId, _bolts.get(componentId));
     	}
+    	System.out.println("Not Found");
     	return null;
 	}
     
