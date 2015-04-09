@@ -31,6 +31,7 @@ import backtype.storm.grouping.CustomStreamGrouping;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
 
+import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -110,6 +111,7 @@ public class TopologyBuilder {
     private static String TIMEOUT_ID_DELIMITER = "|";
     
     public StormTopology createTopology() {
+    	
         Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
         System.out.println("In create Topology");
@@ -132,50 +134,48 @@ public class TopologyBuilder {
             	
             	System.out.println(" This is an Acking bolt" + bolt);
             	
-            	Map<String, Map<String, Grouping>> targetIds = getTargets(boltId);
+            	// <streamID, <componentID, grouping>>
+            	Map<String, Map<String, Grouping>> targets = getTargets(boltId);
             	
-            	for(String targetId: targetIds.keySet()) {
+            	for(String targetStreamId: targets.keySet()) {
             		
-            		System.out.println("Target ID = " + targetId);
+            		System.out.println("Target ID = " + targetStreamId);
+            			
+            		HashSet<String> targetIds = (HashSet<String>) targets.get(targetStreamId).keySet();
             		
-                    Map<GlobalStreamId, Grouping> inputs = getComponentCommon(targetId).get_inputs();
-                    StringBuilder ackingStreams = new StringBuilder();
-                    
-                    for(GlobalStreamId id: inputs.keySet()) {
-                    	
-                    	if(id.get_componentId().equals(boltId)) {
-                    		
-                    		// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
-                    		// even if re-balance / a new node takes this component, as the component Id remains the same,
-                    		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
-							String ackingStreamId = targetId
-									+ ACKING_STREAM_ID_SEPARATOR + boltId
-									+ ACKING_STREAM_ID_SEPARATOR
-									+ id.get_streamId();	
-                    		
-							// adding the ack stream to the AckingBolt
-                    		_commons.get(boltId).put_to_inputs(
-                    				new GlobalStreamId(targetId, ackingStreamId), 
-                    				Grouping.shuffle(new NullStruct()));
-                    		
-                    		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
-                    	}
-                    	
-                    }
-                    ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
-                    
-                    // we should be adding this stream to each of the target bolts configuration to make 
-                    // sure that we are sending the ack message on this ackingStreamId correctly
-            		Map currConfMap = parseJson(_commons.get(targetId).get_json_conf());
-            		if(currConfMap.containsKey(Configuration.send_ack.name())) {
-            			Object oldValue = currConfMap.get(Configuration.send_ack.name());
-            			// RKNOTE: using '|' as delimiter for separating multiple stream names
-            			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
-            		} else {
-            			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+            		StringBuilder ackingStreams = new StringBuilder();
+            		for(String targetId : targetIds) {
+            			
+            			// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
+                		// even if re-balance / a new node takes this component, as the component Id remains the same,
+                		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
+            			String ackingStreamId = targetId
+								+ ACKING_STREAM_ID_SEPARATOR + boltId
+								+ ACKING_STREAM_ID_SEPARATOR
+								+ targetStreamId;	
+                		
+						// adding the ack stream to the AckingBolt
+                		_commons.get(boltId).put_to_inputs(
+                				new GlobalStreamId(targetId, ackingStreamId), 
+                				Grouping.shuffle(new NullStruct()));
+                		
+                		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		}
+            		ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
             		
-                    _commons.get(targetId).set_json_conf(JSONValue.toJSONString(currConfMap));
+            		for(String targetId : targetIds) {
+            			// we should be adding this stream to each of the target bolts configuration to make 
+                        // sure that we are sending the ack message on this ackingStreamId correctly
+                		Map currConfMap = parseJson(_commons.get(targetStreamId).get_json_conf());
+                		if(currConfMap.containsKey(Configuration.send_ack.name())) {
+                			Object oldValue = currConfMap.get(Configuration.send_ack.name());
+                			// RKNOTE: using '|' as delimiter for separating multiple stream names
+                			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
+                		} else {
+                			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+                		}
+                		 _commons.get(targetId).set_json_conf(JSONValue.toJSONString(currConfMap));
+            		}
                     
             	}
             }
@@ -216,7 +216,9 @@ public class TopologyBuilder {
             for(GlobalStreamId id: inputs.keySet()) {
                 if(id.get_componentId().equals(componentId)) {
                     Map<String, Grouping> curr = ret.get(id.get_streamId());
-                    if(curr==null) curr = new HashMap<String, Grouping>();
+                    if(curr==null) {
+                    	curr = new HashMap<String, Grouping>();
+                    }
                     curr.put(otherComponentId, inputs.get(id));
                     ret.put(id.get_streamId(), curr);
                 }
