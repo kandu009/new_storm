@@ -17,6 +17,7 @@
  */
 package backtype.storm.task;
 
+import backtype.storm.Config;
 import backtype.storm.generated.GlobalStreamId;
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StormTopology;
@@ -29,6 +30,7 @@ import backtype.storm.metric.api.CombinedMetric;
 import backtype.storm.state.ISubscribedState;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -36,8 +38,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.lang.NotImplementedException;
 import org.json.simple.JSONValue;
+
+import custom.topology.TopologyContextConstants;
 
 /**
  * A TopologyContext is given to bolts and spouts in their "prepare" and "open"
@@ -310,5 +315,14 @@ public class TopologyContext extends WorkerTopologyContext implements IMetricsCo
      */
     public CombinedMetric registerMetric(String name, ICombiner combiner, int timeBucketSizeInSecs) {
         return registerMetric(name, new CombinedMetric(combiner), timeBucketSizeInSecs);
+    }
+    
+ // TODO: RK added
+    public Boolean enableStormDefaultTimeoutMechanism() {
+    	return Utils.getBoolean(_stormConf.get(Config.USE_STORM_TIMEOUT_MECHANISM), Boolean.TRUE);
+    }
+    
+    public Long getDefaultPerEdgeTimeout() {
+    	return Utils.getLong(_stormConf.get(Config.DEFAULT_PER_EDGE_TIMEOUT), storm.starter.faulttolerance.TopologyContextConstants.DEFAULT_PER_EDGE_TIMEOUT);
     }
 }

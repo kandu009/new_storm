@@ -19,7 +19,9 @@ package backtype.storm;
 
 import backtype.storm.serialization.IKryoDecorator;
 import backtype.storm.serialization.IKryoFactory;
+
 import com.esotericsoftware.kryo.Serializer;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -1040,4 +1042,25 @@ public class Config extends HashMap<String, Object> {
         conf.put(Config.TOPOLOGY_KRYO_DECORATORS, ret);
         return ret;
     }
+    
+    //TODO: RK Added
+    public static final String USE_STORM_TIMEOUT_MECHANISM = "topology.use.storm.timeout.mechanism";
+    public static final String DEFAULT_PER_EDGE_TIMEOUT = "topology.per.edge.timeout";
+    
+    public static void setDefaultPerEdgeTimeout(Map conf, long timeout) {
+        conf.put(Config.DEFAULT_PER_EDGE_TIMEOUT, timeout);
+    }
+
+    public void setDefaultPerEdgeTimeout(long timeout) {
+    	setDefaultPerEdgeTimeout(this, timeout);
+    }
+    
+    public static void setUseStormTimeoutMechanism(Map conf, boolean useStormTimeout) {
+        conf.put(Config.USE_STORM_TIMEOUT_MECHANISM, useStormTimeout);
+    }
+
+    public void setUseStormTimeoutMechanism(boolean useStormTimeout) {
+    	setUseStormTimeoutMechanism(this, useStormTimeout);
+    }
+    
 }
