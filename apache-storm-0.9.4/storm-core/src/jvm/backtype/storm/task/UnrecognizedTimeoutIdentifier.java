@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package backtype.storm.task;
 
 public class UnrecognizedTimeoutIdentifier extends Exception {
 
