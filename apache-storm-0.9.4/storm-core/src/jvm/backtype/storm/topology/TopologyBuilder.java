@@ -132,20 +132,19 @@ public class TopologyBuilder {
             
             if(bolt instanceof AckingBaseRichBolt) {
             	
-            	System.out.println(" This is an Acking bolt" + bolt);
+            	System.out.println(" This is an Acking bolt" + boltId);
             	
             	// <streamID, <componentID, grouping>>
             	Map<String, Map<String, Grouping>> targets = getTargets(boltId);
             	
             	for(String targetStreamId: targets.keySet()) {
             		
-            		System.out.println("Target ID = " + targetStreamId);
-            			
             		HashSet<String> targetIds = (HashSet<String>) targets.get(targetStreamId).keySet();
             		
             		StringBuilder ackingStreams = new StringBuilder();
             		for(String targetId : targetIds) {
             			
+            			System.out.println("Target ID = " + targetId);
             			// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
                 		// even if re-balance / a new node takes this component, as the component Id remains the same,
                 		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
@@ -154,14 +153,17 @@ public class TopologyBuilder {
 								+ ACKING_STREAM_ID_SEPARATOR
 								+ targetStreamId;	
                 		
+            			System.out.println("Adding ackingStreamID = " + ackingStreamId);
 						// adding the ack stream to the AckingBolt
                 		_commons.get(boltId).put_to_inputs(
                 				new GlobalStreamId(targetId, ackingStreamId), 
                 				Grouping.shuffle(new NullStruct()));
+                		System.out.println("Done with adding ackingStreamId to " + boltId);
                 		
                 		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		}
             		ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+            		System.out.println("Acking Stream = " + ackingStreams.toString());
             		
             		for(String targetId : targetIds) {
             			// we should be adding this stream to each of the target bolts configuration to make 
@@ -221,6 +223,7 @@ public class TopologyBuilder {
                     }
                     curr.put(otherComponentId, inputs.get(id));
                     ret.put(id.get_streamId(), curr);
+                    System.out.println("Adding the entry to targets : < " + id.get_streamId() + ", < " + otherComponentId + ", " + inputs.get(id) + " > >");
                 }
             }
         }
