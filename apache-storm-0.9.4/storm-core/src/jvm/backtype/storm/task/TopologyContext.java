@@ -323,6 +323,6 @@ public class TopologyContext extends WorkerTopologyContext implements IMetricsCo
     }
     
     public Long getDefaultPerEdgeTimeout() {
-    	return Utils.getLong(_stormConf.get(Config.DEFAULT_PER_EDGE_TIMEOUT), storm.starter.faulttolerance.TopologyContextConstants.DEFAULT_PER_EDGE_TIMEOUT);
+    	return Utils.getLong(_stormConf.get(Config.DEFAULT_PER_EDGE_TIMEOUT), TopologyContextConstants.DEFAULT_PER_EDGE_TIMEOUT);
     }
 }
