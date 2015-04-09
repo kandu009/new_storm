@@ -112,15 +112,31 @@ public class TopologyBuilder {
     public StormTopology createTopology() {
         Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
+        System.out.println("In create Topology");
+        
+        System.out.println("Bolts = ");
+        for(String b: _bolts.keySet()) {
+        	System.out.println("Bolt Id = " + b);
+        }
+        System.out.println("Spouts = ");
+        for(String b: _spouts.keySet()) {
+        	System.out.println("Spout Id = " + b);
+        }
+        
         for(String boltId: _bolts.keySet()) {
             
+        	System.out.println("Building topology for Bolt = " + boltId);
         	IRichBolt bolt = _bolts.get(boltId);
             
             if(bolt instanceof AckingBaseRichBolt) {
             	
+            	System.out.println(" This is an Acking bolt" + bolt);
+            	
             	Map<String, Map<String, Grouping>> targetIds = getTargets(boltId);
             	
             	for(String targetId: targetIds.keySet()) {
+            		
+            		System.out.println("Target ID = " + targetId);
             		
                     Map<GlobalStreamId, Grouping> inputs = getComponentCommon(targetId).get_inputs();
                     StringBuilder ackingStreams = new StringBuilder();
@@ -206,6 +222,11 @@ public class TopologyBuilder {
                 }
             }
         }
+        StringBuilder sb = new StringBuilder();
+		for(String s : ret.keySet()) {
+        	sb.append(s);
+        }
+        System.out.println("Targets for { " + componentId + " } are { " + sb.toString());
         return ret;
     }
     
