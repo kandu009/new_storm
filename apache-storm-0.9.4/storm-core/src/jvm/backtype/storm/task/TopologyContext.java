@@ -42,8 +42,6 @@ import java.util.Set;
 import org.apache.commons.lang.NotImplementedException;
 import org.json.simple.JSONValue;
 
-import custom.topology.TopologyContextConstants;
-
 /**
  * A TopologyContext is given to bolts and spouts in their "prepare" and "open"
  * methods, respectively. This object provides information about the component's
