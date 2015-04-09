@@ -44,6 +44,7 @@ import java.util.zip.GZIPInputStream;
 
 import backtype.storm.serialization.DefaultSerializationDelegate;
 import backtype.storm.serialization.SerializationDelegate;
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.commons.lang.StringUtils;
@@ -442,5 +443,27 @@ public class Utils {
         }
         delegate.prepare(stormConf);
         return delegate;
+    }
+    
+  //TODO: Rk Added
+    public static Long getLong(Object o, Long defaultValue) {
+    	if (null == o) {
+    		return defaultValue;
+    	}
+    	
+    	if (o instanceof Integer ||
+            o instanceof Short ||
+            o instanceof Byte) {
+            return ((Number) o).longValue();
+        } else if (o instanceof Long) {
+            final long l = (Long) o;
+            if (l <= Long.MAX_VALUE && l >= Long.MIN_VALUE) {
+                return (long) l;
+            }
+        } else if (o instanceof String) {
+            return Long.parseLong((String) o);
+        }
+
+        throw new IllegalArgumentException("Don't know how to convert " + o + " to long");
     }
 }
