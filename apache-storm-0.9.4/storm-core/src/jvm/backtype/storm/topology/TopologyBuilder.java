@@ -39,7 +39,7 @@ import java.util.Set;
 
 import org.json.simple.JSONValue;
 
-import storm.starter.faulttolerance.AckingBaseRichBolt;
+import backtype.storm.task.AckingBaseRichBolt;
 import backtype.storm.task.TopologyContextConstants.Configuration;
 
 /**
