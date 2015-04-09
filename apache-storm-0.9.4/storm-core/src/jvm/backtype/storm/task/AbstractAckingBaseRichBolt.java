@@ -1,9 +1,7 @@
-package storm.starter.faulttolerance;
+package backtype.storm.task;
 
 import java.util.Map;
 
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
 import backtype.storm.tuple.Tuple;
 
 

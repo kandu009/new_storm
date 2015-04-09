@@ -1,6 +1,5 @@
-package storm.starter.faulttolerance;
+package backtype.storm.task;
 
-import backtype.storm.task.IBolt;
 import backtype.storm.tuple.Tuple;
 
 /**

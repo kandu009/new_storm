@@ -1,10 +1,9 @@
-package storm.starter.faulttolerance;
+package backtype.storm.task;
 
 import java.util.Collection;
 import java.util.List;
 
 import backtype.storm.spout.ISpoutOutputCollector;
-import backtype.storm.task.IOutputCollector;
 import backtype.storm.tuple.Tuple;
 
 /**
