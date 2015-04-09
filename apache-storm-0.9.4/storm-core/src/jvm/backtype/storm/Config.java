@@ -1045,7 +1045,10 @@ public class Config extends HashMap<String, Object> {
     
     //TODO: RK Added
     public static final String USE_STORM_TIMEOUT_MECHANISM = "topology.use.storm.timeout.mechanism";
+    public static final Object USE_STORM_TIMEOUT_MECHANISM_SCHEMA = String.class;
+    
     public static final String DEFAULT_PER_EDGE_TIMEOUT = "topology.per.edge.timeout";
+    public static final Object DEFAULT_PER_EDGE_TIMEOUT_SCHEMA = ConfigValidation.LongValidator;
     
     public static void setDefaultPerEdgeTimeout(Map conf, long timeout) {
         conf.put(Config.DEFAULT_PER_EDGE_TIMEOUT, timeout);

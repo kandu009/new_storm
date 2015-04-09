@@ -222,4 +222,33 @@ public class ConfigValidation {
             this.fv.validateField(name, o);
         }
     };
+    
+    /**
+     * RK ADDED
+     * Validates a Long.
+     */
+    public static Object LongValidator = new FieldValidator() {
+        @Override
+        public void validateField(String name, Object o) throws IllegalArgumentException {
+            
+        	if (o == null) {
+            	return;
+            }
+            
+            if(o instanceof Number || 
+            		o instanceof Integer ||
+            		o instanceof Short ||
+            		o instanceof Byte ||
+            		o instanceof Long) {
+            	
+            	final long i = ((Number)o).longValue();
+        		if (i <= Long.MAX_VALUE && i >= Long.MIN_VALUE) {
+                    return;
+                }
+            	
+            }
+            
+            throw new IllegalArgumentException("Field " + name + " must be a Long within type range.");
+        }
+    };
 }
