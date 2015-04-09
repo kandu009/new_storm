@@ -212,9 +212,9 @@ public class AckingExclamationTopology {
 		builder.setSpout(SPOUT, spout, 1);
 		builder.setBolt(EXCLAIM_BOLT1, bolt1, 1).shuffleGrouping(SPOUT, SPOUT_SEND_STREAM);
 		builder.setBolt(EXCLAIM_BOLT2, bolt2, 1).shuffleGrouping(EXCLAIM_BOLT1, B1_B2_SEND_STREAM);
-		builder.setBolt(EXCLAIM_BOLT3, bolt3, 1);
-		builder.setBolt(EXCLAIM_BOLT4, bolt4, 1).shuffleGrouping(EXCLAIM_BOLT3, B3_B4_SEND_STREAM);
-		builder.setBolt(EXCLAIM_BOLT5, bolt5, 1);
+		builder.setBolt(EXCLAIM_BOLT3, bolt3, 1).shuffleGrouping(EXCLAIM_BOLT1);
+		builder.setBolt(EXCLAIM_BOLT4, bolt4, 1).shuffleGrouping(EXCLAIM_BOLT3, B3_B4_SEND_STREAM).shuffleGrouping(EXCLAIM_BOLT2);
+		builder.setBolt(EXCLAIM_BOLT5, bolt5, 1).shuffleGrouping(EXCLAIM_BOLT4);
 		
 		Config conf = new Config();
 		conf.setDebug(true);
