@@ -30,10 +30,17 @@ import backtype.storm.generated.StormTopology;
 import backtype.storm.grouping.CustomStreamGrouping;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+
 import org.json.simple.JSONValue;
+
+import storm.starter.faulttolerance.AckingBaseRichBolt;
+import backtype.storm.task.TopologyContextConstants.Configuration;
 
 /**
  * TopologyBuilder exposes the Java API for specifying a topology for Storm
@@ -96,12 +103,67 @@ public class TopologyBuilder {
 
     private Map<String, StateSpoutSpec> _stateSpouts = new HashMap<String, StateSpoutSpec>();
     
+    private static String TIMEOUT_SEPARATOR = "#";
+    private static String ACKING_STREAM_ID_SEPARATOR = "_";
+    private static String TIMEOUT_ID_SEPARATOR = "_";
+    private static String ACKING_STREAM_DELIMITER = "|";
+    private static String TIMEOUT_ID_DELIMITER = "|";
     
     public StormTopology createTopology() {
         Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
         for(String boltId: _bolts.keySet()) {
-            IRichBolt bolt = _bolts.get(boltId);
+            
+        	IRichBolt bolt = _bolts.get(boltId);
+            
+            if(bolt instanceof AckingBaseRichBolt) {
+            	
+            	Map<String, Map<String, Grouping>> targetIds = getTargets(boltId);
+            	
+            	for(String targetId: targetIds.keySet()) {
+            		
+                    Map<GlobalStreamId, Grouping> inputs = getComponentCommon(targetId).get_inputs();
+                    StringBuilder ackingStreams = new StringBuilder();
+                    
+                    for(GlobalStreamId id: inputs.keySet()) {
+                    	
+                    	if(id.get_componentId().equals(boltId)) {
+                    		
+                    		// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
+                    		// even if re-balance / a new node takes this component, as the component Id remains the same,
+                    		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
+							String ackingStreamId = targetId
+									+ ACKING_STREAM_ID_SEPARATOR + boltId
+									+ ACKING_STREAM_ID_SEPARATOR
+									+ id.get_streamId();	
+                    		
+							// adding the ack stream to the AckingBolt
+                    		_commons.get(boltId).put_to_inputs(
+                    				new GlobalStreamId(targetId, ackingStreamId), 
+                    				Grouping.shuffle(new NullStruct()));
+                    		
+                    		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
+                    	}
+                    	
+                    }
+                    ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+                    
+                    // we should be adding this stream to each of the target bolts configuration to make 
+                    // sure that we are sending the ack message on this ackingStreamId correctly
+            		Map currConfMap = parseJson(_commons.get(targetId).get_json_conf());
+            		if(currConfMap.containsKey(Configuration.send_ack.name())) {
+            			Object oldValue = currConfMap.get(Configuration.send_ack.name());
+            			// RKNOTE: using '|' as delimiter for separating multiple stream names
+            			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
+            		} else {
+            			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+            		}
+            		
+                    _commons.get(targetId).set_json_conf(JSONValue.toJSONString(currConfMap));
+                    
+            	}
+            }
+            
             ComponentCommon common = getComponentCommon(boltId, bolt);
             boltSpecs.put(boltId, new Bolt(ComponentObject.serialized_java(Utils.serialize(bolt)), common));
         }
@@ -116,6 +178,63 @@ public class TopologyBuilder {
                                  new HashMap<String, StateSpoutSpec>());
     }
 
+    //TODO: RK added
+    public Set<String> getComponentIds() {
+        Set<String> ret = new HashSet<String>();
+        ret.addAll(_spouts.keySet());
+        ret.addAll(_bolts.keySet());
+        return ret;
+    }
+
+    //TODO: RK added
+	/**
+	 * Gets information about who is consuming the outputs of the specified
+	 * component, and how.
+	 * 
+	 * @return Map from stream id to component id to the Grouping used.
+	 */
+    public Map<String, Map<String, Grouping>> getTargets(String componentId) {
+        Map<String, Map<String, Grouping>> ret = new HashMap<String, Map<String, Grouping>>();
+        for(String otherComponentId: getComponentIds()) {
+            Map<GlobalStreamId, Grouping> inputs = getComponentCommon(otherComponentId).get_inputs();
+            for(GlobalStreamId id: inputs.keySet()) {
+                if(id.get_componentId().equals(componentId)) {
+                    Map<String, Grouping> curr = ret.get(id.get_streamId());
+                    if(curr==null) curr = new HashMap<String, Grouping>();
+                    curr.put(otherComponentId, inputs.get(id));
+                    ret.put(id.get_streamId(), curr);
+                }
+            }
+        }
+        return ret;
+    }
+    
+    //TODO: RK added
+	/**
+	 * Gets the declared inputs to the specified component.
+	 * 
+	 * @return A map from subscribed component/stream to the grouping subscribed with.
+	 */
+    public Map<GlobalStreamId, Grouping> getSources(String componentId) {
+    	return getComponentCommon(componentId).get_inputs();
+    }
+    
+    //TODO: RK added
+	/**
+	 * Gets the {@link ComponentCommon} object of the Component with this 
+	 * @param componentId
+	 * 
+	 * @return {@link ComponentCommon}
+	 */
+    public ComponentCommon getComponentCommon(String componentId) {
+    	if(_spouts.containsKey(componentId)) {
+    		return getComponentCommon(componentId, _spouts.get(componentId));
+    	}  else if (_bolts.containsKey(componentId)) {
+    		return getComponentCommon(componentId, _bolts.get(componentId));
+    	}
+    	return null;
+	}
+    
     /**
      * Define a new bolt in this topology with parallelism of just one thread.
      *
@@ -269,6 +388,39 @@ public class TopologyBuilder {
             _boltId = boltId;
         }
 
+        // TODO: RK added
+        public BoltDeclarer streamTimeout(String sourceId, String targetId, String streamId, Long timeout) {
+            return addTimeout(sourceId, targetId, streamId, timeout);
+        }
+
+        private BoltDeclarer addTimeout(String sourceId, String targetId, String streamId, Long timeout) {
+        	
+        	//we add sourceId+"_"+targetId+"_"+streamId -> timeout value i the configuration of both source and target
+        	// at source, we need this to track tuples using RotatingMap
+        	// TODO: at target, do we need this at all ? 
+        	Map currSourceConf = parseJson(_commons.get(sourceId).get_json_conf());
+        	String key = sourceId+TIMEOUT_ID_SEPARATOR+targetId+TIMEOUT_ID_SEPARATOR+streamId;
+        	String sValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
+
+        	if(currSourceConf.containsKey(Configuration.timeout.name())) {
+        		sValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currSourceConf.get(Configuration.timeout.name()));
+        	}
+        	Map sConf = new HashMap();
+            sConf.put(key, sValue);
+        	_commons.get(sourceId).set_json_conf(mergeIntoJson(currSourceConf, sConf));
+
+        	Map currTargetConf = parseJson(_commons.get(targetId).get_json_conf());
+        	String tValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
+        	if(currTargetConf.containsKey(Configuration.timeout.name())) {
+        		tValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currTargetConf.get(Configuration.timeout.name()));
+        	}
+        	Map tConf = new HashMap();
+            tConf.put(key, tValue);
+        	_commons.get(targetId).set_json_conf(mergeIntoJson(currTargetConf, tConf));
+        	
+			return this;
+		}
+        
         public BoltDeclarer fieldsGrouping(String componentId, Fields fields) {
             return fieldsGrouping(componentId, Utils.DEFAULT_STREAM_ID, fields);
         }
