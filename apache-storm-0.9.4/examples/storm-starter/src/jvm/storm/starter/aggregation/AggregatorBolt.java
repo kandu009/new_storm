@@ -80,7 +80,7 @@ public class AggregatorBolt extends BaseRichBolt {
 	
 	public void execute(Tuple tuple) {
 		
-		if(_timer == null) {
+		/*if(_timer == null) {
 			_timer = new Timer("DelayerTimer", true);
 			TimerTask task = new TimerTask() {
 				public void run() {
@@ -104,7 +104,7 @@ public class AggregatorBolt extends BaseRichBolt {
 				    _collector.ack(tuple);
 				}
 			}
-		}
+		}*/
 		
 	}
 	
