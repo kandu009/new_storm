@@ -116,15 +116,6 @@ public class TopologyBuilder {
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
         System.out.println("In create Topology");
         
-        System.out.println("Bolts = ");
-        for(String b: _bolts.keySet()) {
-        	System.out.println("Bolt Id = " + b);
-        }
-        System.out.println("Spouts = ");
-        for(String b: _spouts.keySet()) {
-        	System.out.println("Spout Id = " + b);
-        }
-        
         for(String boltId: _bolts.keySet()) {
             
         	System.out.println("Building topology for Bolt = " + boltId);
@@ -139,7 +130,10 @@ public class TopologyBuilder {
             	
             	for(String targetStreamId: targets.keySet()) {
             		
-            		HashSet<String> targetIds = (HashSet<String>) targets.get(targetStreamId).keySet();
+            		HashSet<String> targetIds = new HashSet<String>();
+            		for(String s : targets.get(targetStreamId).keySet()) {
+            			targetIds.add(s);
+            		}
             		
             		StringBuilder ackingStreams = new StringBuilder();
             		for(String targetId : targetIds) {
