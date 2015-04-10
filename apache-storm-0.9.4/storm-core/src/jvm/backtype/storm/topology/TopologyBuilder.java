@@ -150,7 +150,6 @@ public class TopologyBuilder {
                 		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		}
             		ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
-            		System.out.println("Acking Stream = " + ackingStreams.toString());
             		
             		for(String targetId : targetIds) {
             			// we should be adding this stream to each of the target bolts configuration to make 
@@ -209,7 +208,6 @@ public class TopologyBuilder {
         	}
             Map<GlobalStreamId, Grouping> inputs = compCommon.get_inputs();
             for(GlobalStreamId id: inputs.keySet()) {
-            	
                 if(id.get_componentId().equals(componentId)) {
                     Map<String, Grouping> curr = ret.get(id.get_streamId());
                     if(curr==null) {
@@ -217,7 +215,6 @@ public class TopologyBuilder {
                     }
                     curr.put(otherComponentId, inputs.get(id));
                     ret.put(id.get_streamId(), curr);
-                    System.out.println("Adding the entry to targets : < " + id.get_streamId() + ", < " + otherComponentId + ", " + inputs.get(id) + " > >");
                 }
             }
         }
