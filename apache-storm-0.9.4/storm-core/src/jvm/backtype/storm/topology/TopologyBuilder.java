@@ -114,16 +114,12 @@ public class TopologyBuilder {
     	
         Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
-        System.out.println("In create Topology");
         
         for(String boltId: _bolts.keySet()) {
             
-        	System.out.println("Building topology for Bolt = " + boltId);
         	IRichBolt bolt = _bolts.get(boltId);
             
             if(bolt instanceof AckingBaseRichBolt) {
-            	
-            	System.out.println(" This is an Acking bolt" + boltId);
             	
             	// <streamID, <componentID, grouping>>
             	Map<String, Map<String, Grouping>> targets = getTargets(boltId);
@@ -138,7 +134,6 @@ public class TopologyBuilder {
             		StringBuilder ackingStreams = new StringBuilder();
             		for(String targetId : targetIds) {
             			
-            			System.out.println("Target ID = " + targetId);
             			// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
                 		// even if re-balance / a new node takes this component, as the component Id remains the same,
                 		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
@@ -147,12 +142,10 @@ public class TopologyBuilder {
 								+ ACKING_STREAM_ID_SEPARATOR
 								+ targetStreamId;	
                 		
-            			System.out.println("Adding ackingStreamID = " + ackingStreamId);
 						// adding the ack stream to the AckingBolt
                 		_commons.get(boltId).put_to_inputs(
                 				new GlobalStreamId(targetId, ackingStreamId), 
                 				Grouping.shuffle(new NullStruct()));
-                		System.out.println("Done with adding ackingStreamId to " + boltId);
                 		
                 		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		}
@@ -206,23 +199,20 @@ public class TopologyBuilder {
 	 * @return Map from stream id to component id to the Grouping used.
 	 */
     public Map<String, Map<String, Grouping>> getTargets(String componentId) {
-    	System.out.println("In getTargets method");
-        Map<String, Map<String, Grouping>> ret = new HashMap<String, Map<String, Grouping>>();
+
+    	Map<String, Map<String, Grouping>> ret = new HashMap<String, Map<String, Grouping>>();
         for(String otherComponentId: getComponentIds()) {
-        	System.out.println("Seeing if { " + otherComponentId + " } is our target.");
+        	
         	ComponentCommon compCommon = getComponentCommon(otherComponentId);
         	if(compCommon == null) {
-        		System.out.println("Found a null ComponentCommon for " + otherComponentId);
         		continue;
         	}
             Map<GlobalStreamId, Grouping> inputs = compCommon.get_inputs();
             for(GlobalStreamId id: inputs.keySet()) {
-            	System.out.println("Checking for " + id.get_componentId() + "global stream ID");
+            	
                 if(id.get_componentId().equals(componentId)) {
-                	System.out.println("Yes this is our component Id");
                     Map<String, Grouping> curr = ret.get(id.get_streamId());
                     if(curr==null) {
-                    	System.out.println("Creating a new Map for this id");
                     	curr = new HashMap<String, Grouping>();
                     }
                     curr.put(otherComponentId, inputs.get(id));
@@ -231,11 +221,6 @@ public class TopologyBuilder {
                 }
             }
         }
-        StringBuilder sb = new StringBuilder();
-		for(String s : ret.keySet()) {
-        	sb.append(s);
-        }
-        System.out.println("Targets for { " + componentId + " } are { " + sb.toString());
         return ret;
     }
     
@@ -257,15 +242,11 @@ public class TopologyBuilder {
 	 * @return {@link ComponentCommon}
 	 */
     public ComponentCommon getComponentCommon(String componentId) {
-    	System.out.println("In getComponentCommon for = " + componentId);
     	if(_spouts.containsKey(componentId)) {
-    		System.out.println("Found in spouts");
     		return getComponentCommon(componentId, _spouts.get(componentId));
     	}  else if (_bolts.containsKey(componentId)) {
-    		System.out.println("Found in bolts");
     		return getComponentCommon(componentId, _bolts.get(componentId));
     	}
-    	System.out.println("Not Found");
     	return null;
 	}
     
