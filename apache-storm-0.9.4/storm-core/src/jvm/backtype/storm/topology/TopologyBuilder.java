@@ -110,7 +110,7 @@ public class TopologyBuilder {
     private static String ACKING_STREAM_DELIMITER = "|";
     private static String TIMEOUT_ID_DELIMITER = "|";
     
-    public StormTopology createTopology() {
+    public StormTopology createTopology1() {
     	
         Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
         Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
@@ -177,6 +177,100 @@ public class TopologyBuilder {
             spoutSpecs.put(spoutId, new SpoutSpec(ComponentObject.serialized_java(Utils.serialize(spout)), common));
             
         }
+        return new StormTopology(spoutSpecs,
+                                 boltSpecs,
+                                 new HashMap<String, StateSpoutSpec>());
+    }
+    
+    //TODO: continue from here.
+    private boolean isAckingComponent(GlobalStreamId gsi) {
+    	String cid = gsi.get_componentId();
+    	if(_spouts.containsKey(cid)) {
+    		// for now we are only worried about per edge Acking bolts
+    		// take care of this, when we consider acking spouts
+    		return false;
+    	}  else if (_bolts.containsKey(cid)) {
+    		return (_bolts.get(cid) instanceof AckingBaseRichBolt) ? true : false;
+    	}
+    	return false;
+    }
+    
+    public StormTopology createTopology() {
+    	
+        Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
+        Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
+        
+        for(String boltId: _bolts.keySet()) {
+        
+        	System.out.println("Building topology for bolt : " + boltId);
+        	IRichBolt bolt = _bolts.get(boltId);
+            
+            if(bolt instanceof AckingBaseRichBolt) {
+            	
+            	// <globalStreamID = (streamID,componentID), grouping>>
+            	Map<GlobalStreamId, Grouping> sources = getSources(boltId);
+            	StringBuilder ackingStreams = new StringBuilder();
+            	
+            	StringBuilder sb = new StringBuilder();
+            	for( GlobalStreamId gs: sources.keySet()) {
+            		sb.append(gs.get_componentId()).append(":").append(gs.get_streamId()).append(",");
+            	}
+            	System.out.println("Sources of {" + boltId +"} are { " + sb.toString() + " }.");
+            	
+            	for(GlobalStreamId srcGlobStrId: sources.keySet()) {
+
+            		// TODO: should we be sending acks to sources which are not
+    				// participating in per edge timeout mechanism at all? will
+    				// sending acks to others be used ? I don't think so. !!!
+            		if(!isAckingComponent(srcGlobStrId)) {
+            			continue;
+            		}
+            		
+            		// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
+            		// even if re-balance / a new node takes this component, as the component Id remains the same,
+            		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
+            		String ackingStreamId = srcGlobStrId.get_componentId()
+							+ ACKING_STREAM_ID_SEPARATOR + boltId
+							+ ACKING_STREAM_ID_SEPARATOR
+							+ srcGlobStrId.get_streamId();
+            		
+            		// adding the ack stream to the inputs of the source of AckingBolt
+            		_commons.get(srcGlobStrId.get_componentId()).put_to_inputs(
+            				new GlobalStreamId(boltId, ackingStreamId), 
+            				Grouping.shuffle(new NullStruct()));
+            		
+            		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
+            		
+            	}
+            	ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+            	
+            	System.out.println("Acking stream of {" + boltId + "} are {" + ackingStreams.toString() + "}");
+            	
+            	// we should be adding this stream to each of the target bolts configuration to make 
+                // sure that we are sending the ack message on this ackingStreamId correctly
+        		Map currConfMap = parseJson(_commons.get(boltId).get_json_conf());
+        		if(currConfMap.containsKey(Configuration.send_ack.name())) {
+        			Object oldValue = currConfMap.get(Configuration.send_ack.name());
+        			// RKNOTE: using '|' as delimiter for separating multiple stream names
+        			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
+        		} else {
+        			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+        		}
+        		
+        		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
+            		
+            }
+            
+            ComponentCommon common = getComponentCommon(boltId, bolt);
+            boltSpecs.put(boltId, new Bolt(ComponentObject.serialized_java(Utils.serialize(bolt)), common));
+        }
+        
+        for(String spoutId: _spouts.keySet()) {
+            IRichSpout spout = _spouts.get(spoutId);
+            ComponentCommon common = getComponentCommon(spoutId, spout);
+            spoutSpecs.put(spoutId, new SpoutSpec(ComponentObject.serialized_java(Utils.serialize(spout)), common));
+        }
+        
         return new StormTopology(spoutSpecs,
                                  boltSpecs,
                                  new HashMap<String, StateSpoutSpec>());
