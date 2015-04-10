@@ -197,26 +197,28 @@ public class TopologyBuilder {
     
     public StormTopology createTopology() {
     	
-        Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
-        Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
-        
-        for(String boltId: _bolts.keySet()) {
-        
-        	System.out.println("Building topology for bolt : " + boltId);
-        	IRichBolt bolt = _bolts.get(boltId);
+    	// <componentId, StreamID> this should be added to the components inputs using _commons
+    	HashMap<String, HashMap<GlobalStreamId, Grouping>> addToInputs = 
+    			new HashMap<String, HashMap<GlobalStreamId,Grouping>>();
+    	
+    	// <componentId, ackingStreamId's>
+    	HashMap<String, String> compIdVsAckingStreams = new HashMap<String, String>();
+    	
+    	for(String boltId: _bolts.keySet()) {
             
-            if(bolt instanceof AckingBaseRichBolt) {
+        	System.out.println("Building topology for bolt : " + boltId);
+            
+            if(_bolts.get(boltId) instanceof AckingBaseRichBolt) {
             	
             	// <globalStreamID = (streamID,componentID), grouping>>
             	Map<GlobalStreamId, Grouping> sources = getSources(boltId);
-            	StringBuilder ackingStreams = new StringBuilder();
-            	
             	StringBuilder sb = new StringBuilder();
             	for( GlobalStreamId gs: sources.keySet()) {
             		sb.append(gs.get_componentId()).append(":").append(gs.get_streamId()).append(",");
             	}
             	System.out.println("Sources of {" + boltId +"} are { " + sb.toString() + " }.");
-            	
+
+            	StringBuilder ackingStreams = new StringBuilder();
             	for(GlobalStreamId srcGlobStrId: sources.keySet()) {
 
             		// TODO: should we be sending acks to sources which are not
@@ -235,9 +237,12 @@ public class TopologyBuilder {
 							+ srcGlobStrId.get_streamId();
             		
             		// adding the ack stream to the inputs of the source of AckingBolt
-            		_commons.get(srcGlobStrId.get_componentId()).put_to_inputs(
-            				new GlobalStreamId(boltId, ackingStreamId), 
-            				Grouping.shuffle(new NullStruct()));
+            		HashMap<GlobalStreamId, Grouping> old = new HashMap<GlobalStreamId, Grouping>();
+            		if(addToInputs.containsKey(srcGlobStrId.get_componentId())) {
+            			old  = addToInputs.get(srcGlobStrId.get_componentId());
+            		}
+            		old.put(new GlobalStreamId(boltId, ackingStreamId), Grouping.shuffle(new NullStruct()));
+            		addToInputs.put(srcGlobStrId.get_componentId(), old);
             		
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
@@ -246,19 +251,49 @@ public class TopologyBuilder {
             	
             	System.out.println("Acking stream of {" + boltId + "} are {" + ackingStreams.toString() + "}");
             	
-            	// we should be adding this stream to each of the target bolts configuration to make 
-                // sure that we are sending the ack message on this ackingStreamId correctly
-        		Map currConfMap = parseJson(_commons.get(boltId).get_json_conf());
+            	// we should be adding this stream to the current bolts configuration to make 
+                // sure that we are sending the ack message on the ackingStreamId correctly
+            	compIdVsAckingStreams.put(boltId, ackingStreams.toString());
+            	
+            }
+            
+        }
+    	
+        Map<String, Bolt> boltSpecs = new HashMap<String, Bolt>();
+        Map<String, SpoutSpec> spoutSpecs = new HashMap<String, SpoutSpec>();
+        
+        for(String boltId: _bolts.keySet()) {
+        
+        	IRichBolt bolt = _bolts.get(boltId);
+            
+        	// adding the ack stream to the inputs of the source of AckingBolt
+            if(addToInputs.containsKey(boltId)) {
+            	HashMap<GlobalStreamId, Grouping> newInputs = addToInputs.get(boltId);
+            	StringBuilder sb = new StringBuilder();
+            	for(GlobalStreamId ni : newInputs.keySet()) {
+	            	_commons.get(boltId).put_to_inputs(ni, newInputs.get(ni));
+	            	sb.append(ni.get_componentId()).append(":").append(ni.get_streamId()).append(",");
+            	}
+            	System.out.println("Adding acks for {" + boltId + "} " + sb.toString());
+            }
+            
+            // we should be adding acking stream to the respective bolt configuration to make 
+            // sure that we are sending the ack message on this ackingStreamId correctly
+            if(compIdVsAckingStreams.containsKey(boltId)) {
+            	Map currConfMap = parseJson(_commons.get(boltId).get_json_conf());
         		if(currConfMap.containsKey(Configuration.send_ack.name())) {
         			Object oldValue = currConfMap.get(Configuration.send_ack.name());
         			// RKNOTE: using '|' as delimiter for separating multiple stream names
-        			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
+        			currConfMap.put(Configuration.send_ack.name(), 
+        					oldValue.toString()+ACKING_STREAM_DELIMITER+compIdVsAckingStreams.get(boltId));
+        			System.out.println("Acking stream of {" + boltId + "} are {" + 
+        					oldValue.toString()+ACKING_STREAM_DELIMITER+compIdVsAckingStreams.get(boltId) + "}");
         		} else {
-        			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+        			currConfMap.put(Configuration.send_ack.name(), compIdVsAckingStreams.get(boltId));
+        			System.out.println("Acking stream of {" + boltId + "} are {" + 
+        					compIdVsAckingStreams.get(boltId) + "}");
         		}
-        		
         		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
-            		
             }
             
             ComponentCommon common = getComponentCommon(boltId, bolt);
@@ -266,9 +301,24 @@ public class TopologyBuilder {
         }
         
         for(String spoutId: _spouts.keySet()) {
+        	
+        	// adding the ack stream to the inputs of the source of AckingBolt
+            if(addToInputs.containsKey(spoutId)) {
+            	HashMap<GlobalStreamId, Grouping> newInputs = addToInputs.get(spoutId);
+            	StringBuilder sb = new StringBuilder();
+            	for(GlobalStreamId ni : newInputs.keySet()) {
+	            	_commons.get(spoutId).put_to_inputs(ni, newInputs.get(ni)); 
+	            	sb.append(ni.get_componentId()).append(":").append(ni.get_streamId()).append(",");
+            	}
+            	System.out.println("Adding acks for {" + spoutId + "} " + sb.toString());
+            }
+            
+            // we do not have to do the other stuff for spouts as spouts dont
+            // have acking mechanism yet
             IRichSpout spout = _spouts.get(spoutId);
             ComponentCommon common = getComponentCommon(spoutId, spout);
             spoutSpecs.put(spoutId, new SpoutSpec(ComponentObject.serialized_java(Utils.serialize(spout)), common));
+        
         }
         
         return new StormTopology(spoutSpecs,
@@ -615,3 +665,63 @@ public class TopologyBuilder {
         return JSONValue.toJSONString(res);
     }
 }
+
+
+
+/*
+ *  if(bolt instanceof AckingBaseRichBolt) {
+            	
+            	// <globalStreamID = (streamID,componentID), grouping>>
+            	Map<GlobalStreamId, Grouping> sources = getSources(boltId);
+            	StringBuilder ackingStreams = new StringBuilder();
+            	
+            	StringBuilder sb = new StringBuilder();
+            	for( GlobalStreamId gs: sources.keySet()) {
+            		sb.append(gs.get_componentId()).append(":").append(gs.get_streamId()).append(",");
+            	}
+            	System.out.println("Sources of {" + boltId +"} are { " + sb.toString() + " }.");
+            	
+            	for(GlobalStreamId srcGlobStrId: sources.keySet()) {
+
+            		// TODO: should we be sending acks to sources which are not
+    				// participating in per edge timeout mechanism at all? will
+    				// sending acks to others be used ? I don't think so. !!!
+            		if(!isAckingComponent(srcGlobStrId)) {
+            			continue;
+            		}
+            		
+            		// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
+            		// even if re-balance / a new node takes this component, as the component Id remains the same,
+            		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
+            		String ackingStreamId = srcGlobStrId.get_componentId()
+							+ ACKING_STREAM_ID_SEPARATOR + boltId
+							+ ACKING_STREAM_ID_SEPARATOR
+							+ srcGlobStrId.get_streamId();
+            		
+            		// adding the ack stream to the inputs of the source of AckingBolt
+            		_commons.get(srcGlobStrId.get_componentId()).put_to_inputs(
+            				new GlobalStreamId(boltId, ackingStreamId), 
+            				Grouping.shuffle(new NullStruct()));
+            		
+            		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
+            		
+            	}
+            	ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+            	
+            	System.out.println("Acking stream of {" + boltId + "} are {" + ackingStreams.toString() + "}");
+            	
+            	// we should be adding this stream to each of the target bolts configuration to make 
+                // sure that we are sending the ack message on this ackingStreamId correctly
+        		Map currConfMap = parseJson(_commons.get(boltId).get_json_conf());
+        		if(currConfMap.containsKey(Configuration.send_ack.name())) {
+        			Object oldValue = currConfMap.get(Configuration.send_ack.name());
+        			// RKNOTE: using '|' as delimiter for separating multiple stream names
+        			currConfMap.put(Configuration.send_ack.name(), oldValue.toString()+ACKING_STREAM_DELIMITER+ackingStreams.toString());
+        		} else {
+        			currConfMap.put(Configuration.send_ack.name(), ackingStreams.toString());
+        		}
+        		
+        		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
+            		
+            }
+ */
