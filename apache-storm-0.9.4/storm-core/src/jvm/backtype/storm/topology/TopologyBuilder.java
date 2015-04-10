@@ -162,7 +162,7 @@ public class TopologyBuilder {
             		for(String targetId : targetIds) {
             			// we should be adding this stream to each of the target bolts configuration to make 
                         // sure that we are sending the ack message on this ackingStreamId correctly
-                		Map currConfMap = parseJson(_commons.get(targetStreamId).get_json_conf());
+                		Map currConfMap = parseJson(_commons.get(targetId).get_json_conf());
                 		if(currConfMap.containsKey(Configuration.send_ack.name())) {
                 			Object oldValue = currConfMap.get(Configuration.send_ack.name());
                 			// RKNOTE: using '|' as delimiter for separating multiple stream names
