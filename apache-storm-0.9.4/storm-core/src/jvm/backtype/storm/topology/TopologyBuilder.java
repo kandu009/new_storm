@@ -247,7 +247,9 @@ public class TopologyBuilder {
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
             	}
-            	ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+            	if(-1 != ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER)) {
+            		ackingStreams.deleteCharAt(ackingStreams.lastIndexOf(ACKING_STREAM_DELIMITER));
+            	}
             	
             	System.out.println("Acking stream of {" + boltId + "} are {" + ackingStreams.toString() + "}");
             	
