@@ -166,7 +166,7 @@ public class TopologyBuilder {
             		GlobalStreamId gsid = new GlobalStreamId(boltId, ackingStreamId);
             		old.put(gsid, Grouping.shuffle(new NullStruct()));
             		addToInputs.put(srcGlobStrId.get_componentId(), old);
-            		_commons.get(boltId).put_to_streams(gsid.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
+            		_commons.get(srcGlobStrId.get_componentId()).put_to_streams(gsid.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
             		
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
