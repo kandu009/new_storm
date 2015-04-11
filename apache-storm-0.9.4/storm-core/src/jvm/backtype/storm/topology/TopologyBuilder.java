@@ -301,12 +301,7 @@ public class TopologyBuilder {
 	 * @return {@link ComponentCommon}
 	 */
     public ComponentCommon getComponentCommon(String componentId) {
-    	if(_spouts.containsKey(componentId)) {
-    		return getComponentCommon(componentId, _spouts.get(componentId));
-    	}  else if (_bolts.containsKey(componentId)) {
-    		return getComponentCommon(componentId, _bolts.get(componentId));
-    	}
-    	return null;
+    	 return _commons.get(componentId);
 	}
     
     /**
@@ -417,11 +412,24 @@ public class TopologyBuilder {
         
         OutputFieldsGetter getter = new OutputFieldsGetter();
         component.declareOutputFields(getter);
+        printStreams(id, ret);
         ret.set_streams(getter.getFieldsDeclaration());
+        printStreams(id, ret);
         return ret;        
     }
     
-    private void initCommon(String id, IComponent component, Number parallelism) {
+    private void printStreams(String id, ComponentCommon ret) {
+    	if(_commons.get(id).get_streams() == null) {
+    		return;
+    	}
+    	StringBuilder sb = new StringBuilder().append("Streams for {" + id + "} are {");
+    	for(String s :ret.get_streams().keySet()) {
+    		sb.append(s).append(",");
+    	}
+    	System.out.println(sb.append("}").toString());
+	}
+
+	private void initCommon(String id, IComponent component, Number parallelism) {
         ComponentCommon common = new ComponentCommon();
         common.set_inputs(new HashMap<GlobalStreamId, Grouping>());
         if(parallelism!=null) common.set_parallelism_hint(parallelism.intValue());
