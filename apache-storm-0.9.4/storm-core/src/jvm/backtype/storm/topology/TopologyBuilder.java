@@ -163,8 +163,10 @@ public class TopologyBuilder {
             		if(addToInputs.containsKey(srcGlobStrId.get_componentId())) {
             			old  = addToInputs.get(srcGlobStrId.get_componentId());
             		}
-            		old.put(new GlobalStreamId(boltId, ackingStreamId), Grouping.shuffle(new NullStruct()));
+            		GlobalStreamId gsid = new GlobalStreamId(boltId, ackingStreamId);
+            		old.put(gsid, Grouping.shuffle(new NullStruct()));
             		addToInputs.put(srcGlobStrId.get_componentId(), old);
+            		_commons.get(boltId).put_to_streams(gsid.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
             		
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
@@ -193,7 +195,7 @@ public class TopologyBuilder {
             	HashMap<GlobalStreamId, Grouping> newInputs = addToInputs.get(boltId);
             	for(GlobalStreamId ni : newInputs.keySet()) {
 	            	_commons.get(boltId).put_to_inputs(ni, newInputs.get(ni));
-	            	_commons.get(boltId).put_to_streams(ni.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
+	            	System.out.println("Adding {" + ni.get_streamId() + "} to bolt {" + boltId +"}");
             	}
             }
             
