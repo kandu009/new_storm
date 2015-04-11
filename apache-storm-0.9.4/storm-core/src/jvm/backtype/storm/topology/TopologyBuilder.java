@@ -233,6 +233,9 @@ public class TopologyBuilder {
     }
 
     private void printStreams(String boltId) {
+    	if(_commons.get(boltId).get_streams() == null) {
+    		return;
+    	}
     	ComponentCommon componentCommon = _commons.get(boltId);
     	StringBuilder sb = new StringBuilder().append("Streams for {" + boltId + "} are {");
     	for(String s :componentCommon.get_streams().keySet()) {
