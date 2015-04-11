@@ -27,6 +27,7 @@ import backtype.storm.generated.NullStruct;
 import backtype.storm.generated.SpoutSpec;
 import backtype.storm.generated.StateSpoutSpec;
 import backtype.storm.generated.StormTopology;
+import backtype.storm.generated.StreamInfo;
 import backtype.storm.grouping.CustomStreamGrouping;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.Utils;
@@ -192,6 +193,7 @@ public class TopologyBuilder {
             	HashMap<GlobalStreamId, Grouping> newInputs = addToInputs.get(boltId);
             	for(GlobalStreamId ni : newInputs.keySet()) {
 	            	_commons.get(boltId).put_to_inputs(ni, newInputs.get(ni));
+	            	_commons.get(boltId).put_to_streams(ni.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
             	}
             }
             
