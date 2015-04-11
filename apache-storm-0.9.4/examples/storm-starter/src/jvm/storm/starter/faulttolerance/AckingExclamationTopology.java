@@ -149,6 +149,7 @@ public class AckingExclamationTopology {
 			@Override
 			public void declareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declareStream(B1_B2_SEND_STREAM, new Fields("word"));
+				declarer.declare(new Fields("word"));
 			}
 		};
 		
@@ -192,6 +193,7 @@ public class AckingExclamationTopology {
 			@Override
 			public void declareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declareStream(B3_B4_SEND_STREAM, new Fields("word"));
+				declarer.declare(new Fields("word"));
 			}
 		};
 		
