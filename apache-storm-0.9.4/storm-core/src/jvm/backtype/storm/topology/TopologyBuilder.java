@@ -408,12 +408,19 @@ public class TopologyBuilder {
     }
 
     private ComponentCommon getComponentCommon(String id, IComponent component) {
-        ComponentCommon ret = new ComponentCommon(_commons.get(id));
+
+    	ComponentCommon ret = new ComponentCommon(_commons.get(id));
+        
+    	Map<String,StreamInfo> streams = new HashMap<String, StreamInfo>();
+        if(ret.get_streams() != null && !ret.get_streams().isEmpty()) {
+        	streams = ret.get_streams();
+        }
         
         OutputFieldsGetter getter = new OutputFieldsGetter();
         component.declareOutputFields(getter);
         printStreams(id, ret);
-        ret.set_streams(getter.getFieldsDeclaration());
+        streams.putAll(getter.getFieldsDeclaration());
+        ret.set_streams(streams);
         printStreams(id, ret);
         return ret;        
     }
