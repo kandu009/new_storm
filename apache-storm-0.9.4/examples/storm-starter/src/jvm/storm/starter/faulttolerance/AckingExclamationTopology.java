@@ -97,7 +97,7 @@ public class AckingExclamationTopology {
 	  
 	    @Override
 	    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-	        declarer.declare(new Fields("word"));
+	        declarer.declareStream(SPOUT_SEND_STREAM, new Fields("word"));
 	    }
 
 	    @Override
@@ -145,6 +145,11 @@ public class AckingExclamationTopology {
 					emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B1!"));
 				}
 			}
+			
+			@Override
+			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+				declarer.declareStream(B1_B2_SEND_STREAM, new Fields("word"));
+			}
 		};
 		
 		AbstractAckingBaseRichBolt bolt2 = new AbstractAckingBaseRichBolt() {
@@ -160,6 +165,11 @@ public class AckingExclamationTopology {
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
 				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B2!"));
+			}
+
+			@Override
+			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+				declarer.declare(new Fields("word"));
 			}
 			
 		};
@@ -178,6 +188,11 @@ public class AckingExclamationTopology {
 				// 0th index of tuple for per edge tracking.
 				emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B3!"), B3_B4_SEND_STREAM);
 			}
+			
+			@Override
+			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+				declarer.declareStream(B3_B4_SEND_STREAM, new Fields("word"));
+			}
 		};
 		
 		AbstractAckingBaseRichBolt bolt4 = new AbstractAckingBaseRichBolt() {
@@ -195,6 +210,11 @@ public class AckingExclamationTopology {
 				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B4!"));
 				//TODO: shouldn't we ack tuples if enableStormDefaultTimeout_ is true ?????? in AckingBaseRichBolt
 			}
+
+			@Override
+			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+				declarer.declare(new Fields("word"));
+			}
 		};
 		
 		AbstractAckingBaseRichBolt bolt5 = new AbstractAckingBaseRichBolt() {
@@ -204,6 +224,11 @@ public class AckingExclamationTopology {
 			@Override
 			public void customExecute(Tuple tuple) {
 				// TODO: RK NOTE we just ack the tuples if enableStormDefaultTimeout_ here in @AckingBaseRichBolt
+			}
+
+			@Override
+			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+				declarer.declare(new Fields("word"));
 			}
 			
 		};

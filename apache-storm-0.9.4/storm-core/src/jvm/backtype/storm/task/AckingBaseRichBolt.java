@@ -209,9 +209,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		return ret;
 	}
 	
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
-		declarer.declare(new Fields("word"));
-	}
+	public abstract void declareOutputFields(OutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
 		for(Long at : ackTracker_.keySet()) {

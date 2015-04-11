@@ -215,7 +215,6 @@ public class TopologyBuilder {
         		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
             }
             
-            printStreams(boltId);
             ComponentCommon common = getComponentCommon(boltId, bolt);
             boltSpecs.put(boltId, new Bolt(ComponentObject.serialized_java(Utils.serialize(bolt)), common));
         }
@@ -231,18 +230,6 @@ public class TopologyBuilder {
                                  boltSpecs,
                                  new HashMap<String, StateSpoutSpec>());
     }
-
-    private void printStreams(String boltId) {
-    	if(_commons.get(boltId).get_streams() == null) {
-    		return;
-    	}
-    	ComponentCommon componentCommon = _commons.get(boltId);
-    	StringBuilder sb = new StringBuilder().append("Streams for {" + boltId + "} are {");
-    	for(String s :componentCommon.get_streams().keySet()) {
-    		sb.append(s).append(",");
-    	}
-    	System.out.println(sb.append("}").toString());
-	}
 
 	//TODO: RK added
     public Set<String> getComponentIds() {
@@ -418,7 +405,6 @@ public class TopologyBuilder {
         
         OutputFieldsGetter getter = new OutputFieldsGetter();
         component.declareOutputFields(getter);
-        printStreams(id, ret);
         streams.putAll(getter.getFieldsDeclaration());
         ret.set_streams(streams);
         printStreams(id, ret);
