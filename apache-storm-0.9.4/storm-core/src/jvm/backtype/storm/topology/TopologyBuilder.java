@@ -153,8 +153,9 @@ public class TopologyBuilder {
             		// this means that the ack stream is named after the targetComponentId, sourceComponentId and streamId
             		// even if re-balance / a new node takes this component, as the component Id remains the same,
             		// we will not see any issues with loose ends in the streamId's added for acknowledgement's
-            		String ackingStreamId = srcGlobStrId.get_componentId()
-							+ ACKING_STREAM_ID_SEPARATOR + boltId
+            		String ackingStreamId = boltId 
+							+ ACKING_STREAM_ID_SEPARATOR 
+							+ srcGlobStrId.get_componentId()
 							+ ACKING_STREAM_ID_SEPARATOR
 							+ srcGlobStrId.get_streamId();
             		
@@ -166,7 +167,7 @@ public class TopologyBuilder {
             		GlobalStreamId gsid = new GlobalStreamId(boltId, ackingStreamId);
             		old.put(gsid, Grouping.shuffle(new NullStruct()));
             		addToInputs.put(srcGlobStrId.get_componentId(), old);
-            		_commons.get(srcGlobStrId.get_componentId()).put_to_streams(gsid.get_streamId(), new StreamInfo(new ArrayList<String>(), false));
+            		_commons.get(boltId).put_to_streams(ackingStreamId, new StreamInfo(new ArrayList<String>(), false));
             		
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
@@ -214,6 +215,7 @@ public class TopologyBuilder {
         		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
             }
             
+            printStreams(boltId);
             ComponentCommon common = getComponentCommon(boltId, bolt);
             boltSpecs.put(boltId, new Bolt(ComponentObject.serialized_java(Utils.serialize(bolt)), common));
         }
@@ -230,7 +232,16 @@ public class TopologyBuilder {
                                  new HashMap<String, StateSpoutSpec>());
     }
 
-    //TODO: RK added
+    private void printStreams(String boltId) {
+    	ComponentCommon componentCommon = _commons.get(boltId);
+    	StringBuilder sb = new StringBuilder().append("Streams for {" + boltId + "} are {");
+    	for(String s :componentCommon.get_streams().keySet()) {
+    		sb.append(s).append(",");
+    	}
+    	System.out.println(sb.append("}").toString());
+	}
+
+	//TODO: RK added
     public Set<String> getComponentIds() {
         Set<String> ret = new HashSet<String>();
         ret.addAll(_spouts.keySet());
