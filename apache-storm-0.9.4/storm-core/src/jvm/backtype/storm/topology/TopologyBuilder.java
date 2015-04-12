@@ -553,6 +553,7 @@ public class TopologyBuilder {
     	}
     	Map sConf = new HashMap();
         sConf.put(key, sValue);
+        System.out.println("Adding timeout config {"+ key +":"+sValue +"} to source");
     	_commons.get(sourceId).set_json_conf(mergeIntoJson(currSourceConf, sConf));
 
     	Map currTargetConf = parseJson(_commons.get(targetId).get_json_conf());
@@ -562,6 +563,7 @@ public class TopologyBuilder {
     	}
     	Map tConf = new HashMap();
         tConf.put(key, tValue);
+        System.out.println("Adding timeout config {"+ key +":"+sValue +"} to target");
     	_commons.get(targetId).set_json_conf(mergeIntoJson(currTargetConf, tConf));
     	return this;
     	

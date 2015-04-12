@@ -62,6 +62,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		defaultPerEdgeTimeout_ = context.getDefaultPerEdgeTimeout();
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
 		context_ = context;
+		System.out.println("prepare for {" + componentId_ +"}");
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
 		updateAckStreams(conf.get(Configuration.send_ack.name()));
@@ -226,19 +227,23 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	 * which correspond to each of these timeouts.
 	 */
 	private void createAckTrackersPerTimeout() {
+		System.out.println("Create Ack Trackers!!!");
 		for(TimeoutIdentifier i : timeouts_.keySet()) {
 			if(!ackTracker_.containsKey(timeouts_.get(i))) {
 				RotatingMap<String, Tuple> rmap = new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE);
 				ackTracker_.put(timeouts_.get(i), rmap);
+				System.out.println("Created ack tracker {" + timeouts_.get(i) + "}");
 			}
 		}
 		// we should also add a tracker for default per edge timeouts.
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
+		System.out.println("Created a default tracker !!!");
 	}
 	
 	private void updateTimeouts(Object timeouts) {
 		
 		if(timeouts == null) {
+			System.out.println("timeouts are not set !!!");
 			return;
 		}
 
@@ -246,13 +251,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// key1#t1|key2#t2 ...
 		// where key = sourceId+"_"+targetId+"_"+streamId;
 		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
+		System.out.println("All timeouts  { " + (String)timeouts + " }");
 		for(String timeout : timeoutsMap) {
 			String[] identifierTimeout = timeout.split(TIMEOUT_DELIMITER);
 			if(identifierTimeout.length == 2) {
 				try {
+					System.out.println("Adding {" + identifierTimeout[0] + " : " + identifierTimeout[1] +"}");
 					timeouts_.put(new TimeoutIdentifier(identifierTimeout[0]), Long.parseLong(identifierTimeout[1]));
-				} catch (NumberFormatException e) {
-				} catch (UnrecognizedTimeoutIdentifier e) {
+				} catch (Exception e) {
 				}
 			}
 		}
@@ -260,14 +266,17 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	private void updateAckStreams(Object ackStreams) {
 		if(ackStreams == null) {
+			System.out.println("ack streams are not set !!!");
 			return;
 		}
 		// all ack streams are of the form
 		// key1 | key2 | ....
 		// where key = targetId+"_"+boltId+"_"+streamId
+		System.out.println("All ack streams {" + ((String)ackStreams) + "}");
 		String[] ackStreamArray = ((String)ackStreams).split(ACK_STREAM_SEPARATOR);
 		for(String ackStream : ackStreamArray) {
 			if(!ackStream.trim().isEmpty()) {
+				System.out.println("Adding ack stream {" + ackStream +"}");
 				sendAckStream_.add(ackStream.trim());
 			}
 		}
