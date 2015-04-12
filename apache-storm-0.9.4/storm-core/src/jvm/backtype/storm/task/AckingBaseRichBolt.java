@@ -10,7 +10,6 @@ import backtype.storm.generated.Grouping;
 import backtype.storm.testing.AckTracker;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
-import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.RotatingMap;
@@ -64,7 +63,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
 		context_ = context;
 		
-		updateTimeouts((String)conf.get(Configuration.timeout.name()));
+		updateTimeouts(conf.get(Configuration.timeout.name()));
 		updateAckStreams((String) conf.get(Configuration.send_ack.name()));
 		
 		createAckTrackersPerTimeout();
@@ -237,11 +236,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
 	}
 	
-	private void updateTimeouts(String timeouts) {
+	private void updateTimeouts(Object timeouts) {
+		
+		if(timeouts == null) {
+			return;
+		}
+
 		// all timeouts are of the form
 		// key1#t1|key2#t2 ...
 		// where key = sourceId+"_"+targetId+"_"+streamId;
-		String[] timeoutsMap = timeouts.split(TIMEOUTS_SEPARATOR);
+		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
 		for(String timeout : timeoutsMap) {
 			String[] identifierTimeout = timeout.split(TIMEOUT_DELIMITER);
 			if(identifierTimeout.length == 2) {
