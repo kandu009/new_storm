@@ -252,11 +252,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// where key = sourceId+"_"+targetId+"_"+streamId;
 		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
 		System.out.println("All timeouts  { " + (String)timeouts + " }");
-		for(String timeout : timeoutsMap) {
-			String[] timeoutToks = timeout.split(TIMEOUT_DELIMITER);
+		for(int i = 0; i < timeoutsMap.length; ++i) {
+			String[] timeoutToks = timeoutsMap[i].split(TIMEOUT_DELIMITER);
 			if(timeoutToks.length >= 4) {
 				try {
-					System.out.println("Adding {" + timeout +"}");
+					System.out.println("Adding {" + timeoutsMap[i] +"}");
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], timeoutToks[2]), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
