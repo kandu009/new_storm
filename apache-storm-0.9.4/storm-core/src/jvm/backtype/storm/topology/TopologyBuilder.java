@@ -105,7 +105,6 @@ public class TopologyBuilder {
 
     private Map<String, StateSpoutSpec> _stateSpouts = new HashMap<String, StateSpoutSpec>();
     
-    private static String TIMEOUT_SEPARATOR = "#";
     private static String ACKING_STREAM_ID_SEPARATOR = "_";
     private static String TIMEOUT_ID_SEPARATOR = "_";
     private static String ACKING_STREAM_DELIMITER = "|";
@@ -540,30 +539,38 @@ public class TopologyBuilder {
 
     // TODO: RK added
     public TopologyBuilder addStreamTimeout(String sourceId, String targetId, String streamId, Long timeout) {
-    	
-    	//we add sourceId+"_"+targetId+"_"+streamId -> timeout value i the configuration of both source and target
+
+    	//we add key1|key2|... value to the configuration of both source and target
     	// at source, we need this to track tuples using RotatingMap
+    	// where key = sourceId+"_"+targetId+"_"+streamId_timeout
     	// TODO: at target, do we need this at all ? 
     	Map currSourceConf = parseJson(_commons.get(sourceId).get_json_conf());
-    	String key = sourceId+TIMEOUT_ID_SEPARATOR+targetId+TIMEOUT_ID_SEPARATOR+streamId;
-    	String sValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
+		String newTimeout = new String().concat(sourceId).concat(TIMEOUT_ID_SEPARATOR).concat(targetId)
+				.concat(TIMEOUT_ID_SEPARATOR).concat(streamId)
+				.concat(TIMEOUT_ID_SEPARATOR).concat(timeout.toString());
 
-    	if(currSourceConf.containsKey(Configuration.timeout.name())) {
-    		sValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currSourceConf.get(Configuration.timeout.name()));
-    	}
+		if (currSourceConf.containsKey(Configuration.timeout.name())
+				&& (currSourceConf.get(Configuration.timeout.name()) != null)) {
+			newTimeout.concat(TIMEOUT_ID_DELIMITER)
+					.concat((String) currSourceConf.get(Configuration.timeout.name()));
+		}
     	Map sConf = new HashMap();
-        sConf.put(key, sValue);
-        System.out.println("Adding timeout config {"+ key +":"+sValue +"} to source");
+        sConf.put(Configuration.timeout.name(), newTimeout);
+        System.out.println("Adding timeout config {"+ newTimeout +"} to source");
     	_commons.get(sourceId).set_json_conf(mergeIntoJson(currSourceConf, sConf));
 
     	Map currTargetConf = parseJson(_commons.get(targetId).get_json_conf());
-    	String tValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
-    	if(currTargetConf.containsKey(Configuration.timeout.name())) {
-    		tValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currTargetConf.get(Configuration.timeout.name()));
-    	}
+    	newTimeout = new String().concat(sourceId).concat(TIMEOUT_ID_SEPARATOR).concat(targetId)
+				.concat(TIMEOUT_ID_SEPARATOR).concat(streamId)
+				.concat(TIMEOUT_ID_SEPARATOR).concat(timeout.toString());
+    	if (currTargetConf.containsKey(Configuration.timeout.name())
+				&& (currTargetConf.get(Configuration.timeout.name()) != null)) {
+			newTimeout.concat(TIMEOUT_ID_DELIMITER)
+					.concat((String) currTargetConf.get(Configuration.timeout.name()));
+		}
     	Map tConf = new HashMap();
-        tConf.put(key, tValue);
-        System.out.println("Adding timeout config {"+ key +":"+sValue +"} to target");
+    	sConf.put(Configuration.timeout.name(), newTimeout);
+        System.out.println("Adding timeout config {"+ newTimeout +"} to target");
     	_commons.get(targetId).set_json_conf(mergeIntoJson(currTargetConf, tConf));
     	return this;
     	

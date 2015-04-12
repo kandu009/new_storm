@@ -24,7 +24,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private static final String ACK_MESSAGE_DELIMITER = "_";
 	private static final String TIMEOUTS_SEPARATOR = "|";
 	private static final String ACK_STREAM_SEPARATOR = "|";
-	private static final String TIMEOUT_DELIMITER = "#";
+	private static final String TIMEOUT_DELIMITER = "_";
 	private static final int ACK_MESSAGE_TOKEN_LENGTH = 5;
 	private static final String ACK_MESSAGE_START_TOKEN = "ack_";
 
@@ -114,9 +114,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 		// we need to emit the ack only on that particular stream which is
 		// responsible for sending this message.
-		String ackingStreamId = tuple.getSourceStreamId() + ACK_MESSAGE_DELIMITER
-				+ tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
-				+ componentId_;
+		String ackingStreamId = tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
+				+ componentId_ + ACK_MESSAGE_DELIMITER
+				+ tuple.getSourceStreamId();
 
 		// ack message will be like ack_tupleId_componentId_streamID
 		// TODO: RK Note, here we are assuming that tuple.getValue(0) will have our
@@ -176,7 +176,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		
 		for(String targetId : getTargetsForStream(streamId)) {
 			
-			String tupleId = getTupleId(componentId_, targetId);
+			String tupleId = getTupleId(componentId_, targetId, streamId);
 			if(enableStormDefaultTimeout_) {
 				
 				//TODO: check if Values object can be created like this
@@ -248,16 +248,18 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		}
 
 		// all timeouts are of the form
-		// key1#t1|key2#t2 ...
+		// key1_t1|key2_t2 ...
 		// where key = sourceId+"_"+targetId+"_"+streamId;
 		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
 		System.out.println("All timeouts  { " + (String)timeouts + " }");
 		for(String timeout : timeoutsMap) {
 			String[] identifierTimeout = timeout.split(TIMEOUT_DELIMITER);
-			if(identifierTimeout.length == 2) {
+			if(identifierTimeout.length == 4) {
 				try {
-					System.out.println("Adding {" + identifierTimeout[0] + " : " + identifierTimeout[1] +"}");
-					timeouts_.put(new TimeoutIdentifier(identifierTimeout[0]), Long.parseLong(identifierTimeout[1]));
+					System.out.println("Adding {" + timeout +"}");
+					timeouts_.put(new TimeoutIdentifier(identifierTimeout[0],
+							identifierTimeout[1], identifierTimeout[2]), 
+							Long.parseLong(identifierTimeout[3]));
 				} catch (Exception e) {
 				}
 			}
