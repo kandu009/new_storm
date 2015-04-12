@@ -196,7 +196,6 @@ public class TopologyBuilder {
             	HashMap<GlobalStreamId, Grouping> newInputs = addToInputs.get(boltId);
             	for(GlobalStreamId ni : newInputs.keySet()) {
 	            	_commons.get(boltId).put_to_inputs(ni, newInputs.get(ni));
-	            	System.out.println("Adding {" + ni.get_streamId() + "} to bolt {" + boltId +"}");
             	}
             }
             
@@ -407,20 +406,8 @@ public class TopologyBuilder {
         component.declareOutputFields(getter);
         streams.putAll(getter.getFieldsDeclaration());
         ret.set_streams(streams);
-        printStreams(id, ret);
         return ret;        
     }
-    
-    private void printStreams(String id, ComponentCommon ret) {
-    	if(_commons.get(id).get_streams() == null) {
-    		return;
-    	}
-    	StringBuilder sb = new StringBuilder().append("Streams for {" + id + "} are {");
-    	for(String s :ret.get_streams().keySet()) {
-    		sb.append(s).append(",");
-    	}
-    	System.out.println(sb.append("}").toString());
-	}
 
 	private void initCommon(String id, IComponent component, Number parallelism) {
         ComponentCommon common = new ComponentCommon();
