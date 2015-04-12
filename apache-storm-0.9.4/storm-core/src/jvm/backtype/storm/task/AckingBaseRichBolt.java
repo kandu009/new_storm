@@ -10,6 +10,7 @@ import backtype.storm.generated.Grouping;
 import backtype.storm.testing.AckTracker;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.RotatingMap;
@@ -29,6 +30,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private static final String ACK_MESSAGE_START_TOKEN = "ack_";
 
 	private static final String TUPLE_ID_SEPARATOR = "_";
+	private static final int ACTUAL_MESSAGE_INDEX = 1;
+	private static final int TUPLE_ID_INDEX = 1;
+	private static String TUPLE_ID_FIELD_NAME = null;
 	
 	//TODO: are all of these thread safe? we should be able to support a parallelism > 1
 	private OutputCollector collector_;
@@ -55,13 +59,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	// this Bolt
 	private HashMap<TimeoutIdentifier, Long> timeouts_ = new HashMap<TimeoutIdentifier, Long>();
 	
-	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+	public final void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		
 		collector_ = collector;
 		componentId_ = context.getThisComponentId();
 		defaultPerEdgeTimeout_ = context.getDefaultPerEdgeTimeout();
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
 		context_ = context;
+		TUPLE_ID_FIELD_NAME = componentId_+"_tupleId";
 		System.out.println("prepare for {" + componentId_ +"}");
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
@@ -90,7 +95,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		
 		checkForTimedOutTuples();
 		
-		if(tuple.getValue(0).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
+		if(tuple.getValue(ACTUAL_MESSAGE_INDEX).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
 			handleAckMessage(tuple);
 			return;
 		}
@@ -117,14 +122,18 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String ackingStreamId = tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
 				+ componentId_ + ACK_MESSAGE_DELIMITER
 				+ tuple.getSourceStreamId();
-
+		
 		// ack message will be like ack_tupleId_componentId_streamID
 		// TODO: RK Note, here we are assuming that tuple.getValue(0) will have our
 		// ack message which has our tupleID
 		StringBuilder ackMsg = new StringBuilder().append(
-				ACK_MESSAGE_START_TOKEN).append(tuple.getValue(0).toString());
+				ACK_MESSAGE_START_TOKEN).append(tuple.getValue(TUPLE_ID_INDEX).toString());
 
-		collector_.emit(ackingStreamId, new Values(ackMsg.toString()));
+		// this is to make sure that all messages that we send from an
+				// AckingBolt has the first tuple field as tupleId
+		String tupleId = getTupleId(componentId_, tuple.getSourceComponent(), ackingStreamId);
+		
+		collector_.emit(ackingStreamId, new Values(tupleId, ackMsg.toString()));
 		
 	}
 
@@ -135,7 +144,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void handleAckMessage(Tuple tuple) {
 		
 		// this will be of form ack_tupleId_componentId_streamID
-		String ack = tuple.getValue(0).toString();
+		// we are assuming that the tuple[0] will have the tuple ID, 
+		// we will not use tupleId for acking messages. 
+		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH == ackToks.length) {
@@ -209,7 +220,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		return ret;
 	}
 	
-	public abstract void declareOutputFields(OutputFieldsDeclarer declarer);
+	public final void declareOutputFields(OutputFieldsDeclarer declarer) {
+		customDeclareOutputFields(declarer);
+		declarer.declare(new Fields(TUPLE_ID_FIELD_NAME));
+	}
+	
+	public abstract void customDeclareOutputFields(OutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
 		for(Long at : ackTracker_.keySet()) {

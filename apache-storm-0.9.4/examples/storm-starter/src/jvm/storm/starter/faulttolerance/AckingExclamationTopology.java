@@ -79,6 +79,9 @@ public class AckingExclamationTopology {
 	        final String[] words = new String[] {"distributed", "computing", "systems", "group"};
 	        final Random rand = new Random();
 	        final String word = words[rand.nextInt(words.length)];
+			// this is to make sure that we are always sending the TupleId in
+			// tuple[0] and the actual message only starts from tuple[1]
+	        String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
 	        if(enableStormsTimeoutMechanism_) {
 	        	
 	        	//TODO: RKNOTE 
@@ -87,17 +90,19 @@ public class AckingExclamationTopology {
 	        	
 	        	// But is this messageId needed in every bolt for acking?
 	        	// or can we just not worry about it as long as the tuple is 
-	        	// anchored and acked/failed? 
-	        	_collector.emit(SPOUT_SEND_STREAM, new Values(word), 
-	        			new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString());
+	        	// anchored and acked/failed?
+	        	_collector.emit(SPOUT_SEND_STREAM, new Values(tupleId, word), tupleId);
 	        } else {
-	        	_collector.emit(SPOUT_SEND_STREAM, new Values(word));
+	        	_collector.emit(SPOUT_SEND_STREAM, new Values(tupleId, word));
 	        }
 	    }
 	  
 	    @Override
 	    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-	        declarer.declareStream(SPOUT_SEND_STREAM, new Fields("word"));
+			// TODO: spout_tupleId is needed to carry forward the rule that
+			// tuple[0] should always have tupleId
+			// we should probably add a new abstraction for AckingSpouts???
+	        declarer.declareStream(SPOUT_SEND_STREAM, new Fields("spout_tupleId", "word"));
 	    }
 
 	    @Override
@@ -147,7 +152,7 @@ public class AckingExclamationTopology {
 			}
 			
 			@Override
-			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declareStream(B1_B2_SEND_STREAM, new Fields("word"));
 				declarer.declare(new Fields("word"));
 			}
@@ -169,7 +174,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 			
@@ -191,7 +196,7 @@ public class AckingExclamationTopology {
 			}
 			
 			@Override
-			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declareStream(B3_B4_SEND_STREAM, new Fields("word"));
 				declarer.declare(new Fields("word"));
 			}
@@ -214,7 +219,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 		};
@@ -229,7 +234,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void declareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 			
