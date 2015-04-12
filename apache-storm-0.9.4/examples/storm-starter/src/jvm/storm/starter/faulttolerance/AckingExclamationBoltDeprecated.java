@@ -70,7 +70,7 @@ public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 		this(DEFAULT_TIMEOUT);
 	}
 	
-	public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
+	/*public void prepare(Map conf, TopologyContext context, OutputCollector collector) {
 		
 		sendStreamVsTimeout_.putAll(getStreamIdTimeoutMapping((ArrayList<SendStreamTimeoutPair>) conf.get(SendReceiveToken.send_msg.name())));
 		receiveStream_.addAll((ArrayList<String>) conf.get(SendReceiveToken.receive_msg.name()));
@@ -87,7 +87,7 @@ public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 		collector_ = collector;
 		createAckTrackersPerTimeout();
 		
-	}
+	}*/
 
 	/*public void execute(Tuple tuple) {
 		
@@ -137,9 +137,9 @@ public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 		// _collector.ack(tuple);
 	}*/
 
-	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+	/*public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declare(new Fields("word"));
-	}
+	}*/
 	
 	private void findAndAckTuple(String tupleId) {
 		for(Long at : ackTracker_.keySet()) {
@@ -184,6 +184,12 @@ public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
 		
 	}
