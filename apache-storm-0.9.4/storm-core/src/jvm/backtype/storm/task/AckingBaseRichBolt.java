@@ -253,13 +253,13 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
 		System.out.println("All timeouts  { " + (String)timeouts + " }");
 		for(String timeout : timeoutsMap) {
-			String[] identifierTimeout = timeout.split(TIMEOUT_DELIMITER);
-			if(identifierTimeout.length == 4) {
+			String[] timeoutToks = timeout.split(TIMEOUT_DELIMITER);
+			if(timeoutToks.length >= 4) {
 				try {
 					System.out.println("Adding {" + timeout +"}");
-					timeouts_.put(new TimeoutIdentifier(identifierTimeout[0],
-							identifierTimeout[1], identifierTimeout[2]), 
-							Long.parseLong(identifierTimeout[3]));
+					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
+							timeoutToks[1], timeoutToks[2]), 
+							Long.parseLong(timeoutToks[timeoutToks.length-1]));
 				} catch (Exception e) {
 				}
 			}
@@ -276,10 +276,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// where key = targetId+"_"+boltId+"_"+streamId
 		System.out.println("All ack streams {" + ((String)ackStreams) + "}");
 		String[] ackStreamArray = ((String)ackStreams).split(ACK_STREAM_SEPARATOR);
-		for(String ackStream : ackStreamArray) {
-			if(!ackStream.trim().isEmpty()) {
-				System.out.println("Adding ack stream {" + ackStream +"}");
-				sendAckStream_.add(ackStream.trim());
+		for(int i = 0; i < ackStreamArray.length; ++i) {
+			if(!ackStreamArray[i].trim().isEmpty()) {
+				System.out.println("Adding ack stream {" + ackStreamArray[i] +"}");
+				sendAckStream_.add(ackStreamArray[i].trim());
 			}
 		}
 	}
