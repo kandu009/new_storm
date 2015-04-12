@@ -10,7 +10,7 @@ public class TimeoutIdentifier {
 	
 	//	Identifier is of the form sourceId+"_"+targetId+"_"+streamId;
 	public TimeoutIdentifier(String identifier) throws UnrecognizedTimeoutIdentifier {
-		String[] tokens = identifier.split(DELIMITER);
+		String[] tokens = identifier.split("[*"+DELIMITER+"*]+");
 		if(tokens.length != 3) {
 			throw new UnrecognizedTimeoutIdentifier(identifier);
 		}

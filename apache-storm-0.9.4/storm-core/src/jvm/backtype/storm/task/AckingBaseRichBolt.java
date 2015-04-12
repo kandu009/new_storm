@@ -136,7 +136,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		
 		// this will be of form ack_tupleId_componentId_streamID
 		String ack = tuple.getValue(0).toString();
-		String[] ackToks = ack.split(ACK_MESSAGE_DELIMITER);
+		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH == ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
@@ -250,10 +250,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// all timeouts are of the form
 		// key1_t1|key2_t2 ...
 		// where key = sourceId+"_"+targetId+"_"+streamId;
-		String[] timeoutsMap = ((String)timeouts).split(TIMEOUTS_SEPARATOR);
+		String[] timeoutsMap = ((String)timeouts).split("[*"+TIMEOUTS_SEPARATOR+"*]+");
 		System.out.println("All timeouts  { " + (String)timeouts + " }");
 		for(int i = 0; i < timeoutsMap.length; ++i) {
-			String[] timeoutToks = timeoutsMap[i].split(TIMEOUT_DELIMITER);
+			String[] timeoutToks = timeoutsMap[i].split("[*"+TIMEOUT_DELIMITER+"*]+");
 			if(timeoutToks.length >= 4) {
 				try {
 					System.out.println("Adding {" + timeoutsMap[i] +"}");
@@ -275,7 +275,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// key1 | key2 | ....
 		// where key = targetId+"_"+boltId+"_"+streamId
 		System.out.println("All ack streams {" + ((String)ackStreams) + "}");
-		String[] ackStreamArray = ((String)ackStreams).split(ACK_STREAM_SEPARATOR);
+		String[] ackStreamArray = ((String)ackStreams).split("[*"+ACK_STREAM_SEPARATOR+"*]+");
 		for(int i = 0; i < ackStreamArray.length; ++i) {
 			if(!ackStreamArray[i].trim().isEmpty()) {
 				System.out.println("Adding ack stream {" + ackStreamArray[i] +"}");
