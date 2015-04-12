@@ -243,6 +243,9 @@ public class AckingExclamationTopology {
 		builder.setBolt(EXCLAIM_BOLT4, bolt4, 1).shuffleGrouping(EXCLAIM_BOLT3, B3_B4_SEND_STREAM).shuffleGrouping(EXCLAIM_BOLT2);
 		builder.setBolt(EXCLAIM_BOLT5, bolt5, 1).shuffleGrouping(EXCLAIM_BOLT4);
 		
+		builder.addStreamTimeout(EXCLAIM_BOLT1, EXCLAIM_BOLT2, B1_B2_SEND_STREAM, 10000L)
+				.addStreamTimeout(EXCLAIM_BOLT3, EXCLAIM_BOLT4, B3_B4_SEND_STREAM, 20000L);
+		
 		Config conf = new Config();
 		conf.setDebug(true);
 		conf.setDefaultPerEdgeTimeout(5000);

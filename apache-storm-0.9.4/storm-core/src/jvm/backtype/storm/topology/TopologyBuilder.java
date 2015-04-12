@@ -450,39 +450,6 @@ public class TopologyBuilder {
             _boltId = boltId;
         }
 
-        // TODO: RK added
-        public BoltDeclarer streamTimeout(String sourceId, String targetId, String streamId, Long timeout) {
-            return addTimeout(sourceId, targetId, streamId, timeout);
-        }
-
-        private BoltDeclarer addTimeout(String sourceId, String targetId, String streamId, Long timeout) {
-        	
-        	//we add sourceId+"_"+targetId+"_"+streamId -> timeout value i the configuration of both source and target
-        	// at source, we need this to track tuples using RotatingMap
-        	// TODO: at target, do we need this at all ? 
-        	Map currSourceConf = parseJson(_commons.get(sourceId).get_json_conf());
-        	String key = sourceId+TIMEOUT_ID_SEPARATOR+targetId+TIMEOUT_ID_SEPARATOR+streamId;
-        	String sValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
-
-        	if(currSourceConf.containsKey(Configuration.timeout.name())) {
-        		sValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currSourceConf.get(Configuration.timeout.name()));
-        	}
-        	Map sConf = new HashMap();
-            sConf.put(key, sValue);
-        	_commons.get(sourceId).set_json_conf(mergeIntoJson(currSourceConf, sConf));
-
-        	Map currTargetConf = parseJson(_commons.get(targetId).get_json_conf());
-        	String tValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
-        	if(currTargetConf.containsKey(Configuration.timeout.name())) {
-        		tValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currTargetConf.get(Configuration.timeout.name()));
-        	}
-        	Map tConf = new HashMap();
-            tConf.put(key, tValue);
-        	_commons.get(targetId).set_json_conf(mergeIntoJson(currTargetConf, tConf));
-        	
-			return this;
-		}
-        
         public BoltDeclarer fieldsGrouping(String componentId, Fields fields) {
             return fieldsGrouping(componentId, Utils.DEFAULT_STREAM_ID, fields);
         }
@@ -570,4 +537,34 @@ public class TopologyBuilder {
         if(newMap!=null) res.putAll(newMap);
         return JSONValue.toJSONString(res);
     }
+
+    // TODO: RK added
+    public TopologyBuilder addStreamTimeout(String sourceId, String targetId, String streamId, Long timeout) {
+    	
+    	//we add sourceId+"_"+targetId+"_"+streamId -> timeout value i the configuration of both source and target
+    	// at source, we need this to track tuples using RotatingMap
+    	// TODO: at target, do we need this at all ? 
+    	Map currSourceConf = parseJson(_commons.get(sourceId).get_json_conf());
+    	String key = sourceId+TIMEOUT_ID_SEPARATOR+targetId+TIMEOUT_ID_SEPARATOR+streamId;
+    	String sValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
+
+    	if(currSourceConf.containsKey(Configuration.timeout.name())) {
+    		sValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currSourceConf.get(Configuration.timeout.name()));
+    	}
+    	Map sConf = new HashMap();
+        sConf.put(key, sValue);
+    	_commons.get(sourceId).set_json_conf(mergeIntoJson(currSourceConf, sConf));
+
+    	Map currTargetConf = parseJson(_commons.get(targetId).get_json_conf());
+    	String tValue = new String().concat(key).concat(TIMEOUT_SEPARATOR).concat(timeout.toString());
+    	if(currTargetConf.containsKey(Configuration.timeout.name())) {
+    		tValue.concat(TIMEOUT_ID_DELIMITER).concat((String) currTargetConf.get(Configuration.timeout.name()));
+    	}
+    	Map tConf = new HashMap();
+        tConf.put(key, tValue);
+    	_commons.get(targetId).set_json_conf(mergeIntoJson(currTargetConf, tConf));
+    	return this;
+    	
+    }
+
 }
