@@ -64,7 +64,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		context_ = context;
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
-		updateAckStreams((String) conf.get(Configuration.send_ack.name()));
+		updateAckStreams(conf.get(Configuration.send_ack.name()));
 		
 		createAckTrackersPerTimeout();
 		
@@ -113,9 +113,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 		// we need to emit the ack only on that particular stream which is
 		// responsible for sending this message.
-		String ackingStreamId = componentId_ + ACK_MESSAGE_DELIMITER
+		String ackingStreamId = tuple.getSourceStreamId() + ACK_MESSAGE_DELIMITER
 				+ tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
-				+ tuple.getSourceStreamId();
+				+ componentId_;
 
 		// ack message will be like ack_tupleId_componentId_streamID
 		// TODO: RK Note, here we are assuming that tuple.getValue(0) will have our
@@ -258,11 +258,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		}
 	}
 	
-	private void updateAckStreams(String ackStreams) {
+	private void updateAckStreams(Object ackStreams) {
+		if(ackStreams == null) {
+			return;
+		}
 		// all ack streams are of the form
 		// key1 | key2 | ....
 		// where key = targetId+"_"+boltId+"_"+streamId
-		String[] ackStreamArray = ackStreams.split(ACK_STREAM_SEPARATOR);
+		String[] ackStreamArray = ((String)ackStreams).split(ACK_STREAM_SEPARATOR);
 		for(String ackStream : ackStreamArray) {
 			if(!ackStream.trim().isEmpty()) {
 				sendAckStream_.add(ackStream.trim());
