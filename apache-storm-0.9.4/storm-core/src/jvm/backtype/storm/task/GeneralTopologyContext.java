@@ -26,11 +26,13 @@ import backtype.storm.generated.StormTopology;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.ThriftTopologyUtils;
 import backtype.storm.utils.Utils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.json.simple.JSONValue;
 import org.json.simple.JSONAware;
 
@@ -194,5 +196,20 @@ public class GeneralTopologyContext implements JSONAware {
             }
         }
         return max;
+    }
+    
+    // RK ADDED
+    public void setComponentOutputFields(String componentId, String streamId, Fields fields) {
+    	Map<String, Fields> currMap = new HashMap<String, Fields>();
+    	if(_componentToStreamToFields.containsKey(componentId)) {
+        	currMap = _componentToStreamToFields.get(componentId);
+        }
+    	
+    	List<String> newFields = fields.toList();
+    	if(currMap.containsKey(streamId)) {
+    		newFields.addAll(currMap.get(streamId).toList());
+    		currMap.put(streamId, new Fields(newFields));
+    	}
+    	_componentToStreamToFields.put(componentId, currMap);
     }
 }

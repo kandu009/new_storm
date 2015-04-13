@@ -351,14 +351,17 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void updateFieldsForAckStreams() {
 		// these are the fields that we send on the ack stream for all the per edge topology components
 		
-		List<String> ackFields = new ArrayList<String>();
-		ackFields.add(AckStreamFields.tupeId.name());
-		ackFields.add(AckStreamFields.ackMsg.name());
+		List<String> fields = new ArrayList<String>();
+		fields.add(AckStreamFields.tupeId.name());
+		fields.add(AckStreamFields.ackMsg.name());
 
+		Fields ackFields = new Fields(fields);
 		for(String stream : sendAckStream_) {
-			declarer_.declareStream(stream, new Fields(ackFields));
-			System.out.println("Adding fields {" + ackFields.toArray().toString() + "} to stream {" + stream +"}");
+			declarer_.declareStream(stream, ackFields);
+			context_.setComponentOutputFields(componentId_, stream, ackFields);
+			System.out.println("Adding fields {" + fields.toArray().toString() + "} to stream {" + stream +"}");
 		}
+		
 	}
 	
 }

@@ -315,12 +315,18 @@ public class TopologyContext extends WorkerTopologyContext implements IMetricsCo
         return registerMetric(name, new CombinedMetric(combiner), timeBucketSizeInSecs);
     }
     
- // TODO: RK added
+    // TODO: RK added
     public Boolean enableStormDefaultTimeoutMechanism() {
     	return Utils.getBoolean(_stormConf.get(Config.USE_STORM_TIMEOUT_MECHANISM), Boolean.TRUE);
     }
     
     public Long getDefaultPerEdgeTimeout() {
     	return Utils.getLong(_stormConf.get(Config.DEFAULT_PER_EDGE_TIMEOUT), TopologyContextConstants.DEFAULT_PER_EDGE_TIMEOUT);
+    }
+    
+    @Override
+    public void setComponentOutputFields(String componentId, String streamId,
+    		Fields fields) {
+    	super.setComponentOutputFields(componentId, streamId, fields);
     }
 }

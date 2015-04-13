@@ -19,6 +19,7 @@ package backtype.storm.task;
 
 import backtype.storm.generated.StormTopology;
 import backtype.storm.tuple.Fields;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -102,5 +103,12 @@ public class WorkerTopologyContext extends GeneralTopologyContext {
     
     public ExecutorService getSharedExecutor() {
         return (ExecutorService) _defaultResources.get(SHARED_EXECUTOR);
+    }
+
+    // RK ADDED
+    @Override
+    public void setComponentOutputFields(String componentId, String streamId,
+    		Fields fields) {
+    	super.setComponentOutputFields(componentId, streamId, fields);
     }
 }
