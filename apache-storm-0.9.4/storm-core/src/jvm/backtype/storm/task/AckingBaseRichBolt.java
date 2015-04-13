@@ -9,7 +9,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StreamInfo;
-import backtype.storm.spout.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import backtype.storm.spout.ShellSpout;
 import backtype.storm.testing.AckTracker;
 import backtype.storm.topology.AckingOutputFieldsDeclarer;
