@@ -17,10 +17,12 @@
  */
 package backtype.storm.topology;
 
+import java.io.Serializable;
+
 import backtype.storm.tuple.Fields;
 
 
-public interface OutputFieldsDeclarer {
+public interface OutputFieldsDeclarer extends Serializable {
     /**
      * Uses default stream id.
      */
