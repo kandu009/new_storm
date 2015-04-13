@@ -99,6 +99,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	public final void execute(Tuple tuple) {
 		
+		System.out.println("Received a tuple {" + tuple.getString(0) + "}, {" + tuple.getString(1) +"}");
+		
 		checkForTimedOutTuples();
 		
 		if(tuple.getValue(ACTUAL_MESSAGE_INDEX).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
@@ -125,8 +127,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void sendAckMessage(Tuple tuple) {
 		// we need to emit the ack only on that particular stream which is
 		// responsible for sending this message.
-		String ackingStreamId = tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
-				+ componentId_ + ACK_MESSAGE_DELIMITER
+		String ackingStreamId = componentId_ + ACK_MESSAGE_DELIMITER
+				+ tuple.getSourceComponent() + ACK_MESSAGE_DELIMITER
 				+ tuple.getSourceStreamId();
 		
 		// ack message will be like ack_tupleId_componentId_streamID
@@ -141,7 +143,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emit(ackingStreamId, vals);
-		System.out.println("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
+		System.out.println("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}, msg {" + ackMsg +"}");
 		LOG.info("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 	}
 
