@@ -35,7 +35,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private static final String TUPLE_ID_SEPARATOR = "_";
 	private static final int ACTUAL_MESSAGE_INDEX = 1;
 	private static final int TUPLE_ID_INDEX = 1;
-	private static String TUPLE_ID_FIELD_NAME = null;
+	private static String TUPLE_ID_FIELD_NAME = "_tupleId";
 	
 	//TODO: are all of these thread safe? we should be able to support a parallelism > 1
 	private OutputCollector collector_;
@@ -69,7 +69,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		defaultPerEdgeTimeout_ = context.getDefaultPerEdgeTimeout();
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
 		context_ = context;
-		TUPLE_ID_FIELD_NAME = componentId_+"_tupleId";
 		System.out.println("prepare for {" + componentId_ +"}");
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
