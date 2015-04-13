@@ -58,6 +58,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private Long defaultPerEdgeTimeout_;
 	private Boolean enableStormDefaultTimeout_;
 	private TopologyContext context_;
+	private OutputFieldsDeclarer declarer_;
 	
 	// since this is just constructed once and read everywhere else, it should
 	// be fine even in case of multi threaded environment
@@ -264,23 +265,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			newFields.add(TUPLE_ID_FIELD_NAME);
 			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
 		}
-		
-		// these are the fields that we send on the ack stream for all the per edge topology components
-		List<String> ackFields = new ArrayList<String>();
-		ackFields.add(AckStreamFields.tupeId.name());
-		ackFields.add(AckStreamFields.ackMsg.name());
-		if(sendAckStream_.isEmpty()) {
-			System.out.println("sendAckStream_ is empty");
-		}
-		StringBuilder sb = new StringBuilder();
-		for(String stream : sendAckStream_) {
-			sb.append(stream);
-		}
-		System.out.println(sb.toString());
-		for(String stream : sendAckStream_) {
-			declarer.declareStream(stream, new Fields(ackFields));
-			System.out.println("Adding fields {" + ackFields.toArray().toString() + "} to stream {" + stream +"}");
-		}
+		declarer_ = declarer;
 	}
 	
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
@@ -358,6 +343,21 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				sendAckStream_.add(ackStreamArray[i].trim());
 				LOG.info("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
+		}
+		
+		updateFieldsForAckStreams();
+	}
+
+	private void updateFieldsForAckStreams() {
+		// these are the fields that we send on the ack stream for all the per edge topology components
+		
+		List<String> ackFields = new ArrayList<String>();
+		ackFields.add(AckStreamFields.tupeId.name());
+		ackFields.add(AckStreamFields.ackMsg.name());
+
+		for(String stream : sendAckStream_) {
+			declarer_.declareStream(stream, new Fields(ackFields));
+			System.out.println("Adding fields {" + ackFields.toArray().toString() + "} to stream {" + stream +"}");
 		}
 	}
 	
