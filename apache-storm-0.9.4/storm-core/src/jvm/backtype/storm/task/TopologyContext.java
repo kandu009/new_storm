@@ -323,10 +323,4 @@ public class TopologyContext extends WorkerTopologyContext implements IMetricsCo
     public Long getDefaultPerEdgeTimeout() {
     	return Utils.getLong(_stormConf.get(Config.DEFAULT_PER_EDGE_TIMEOUT), TopologyContextConstants.DEFAULT_PER_EDGE_TIMEOUT);
     }
-    
-    @Override
-    public void setComponentOutputFields(String componentId, String streamId,
-    		Fields fields) {
-    	super.setComponentOutputFields(componentId, streamId, fields);
-    }
 }

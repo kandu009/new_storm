@@ -23,12 +23,15 @@ import backtype.storm.generated.ComponentCommon;
 import backtype.storm.generated.GlobalStreamId;
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StormTopology;
+import backtype.storm.task.AckingBaseRichBolt.AckStreamFields;
+import backtype.storm.task.TopologyContextConstants.Configuration;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.ThriftTopologyUtils;
 import backtype.storm.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -37,12 +40,20 @@ import org.json.simple.JSONValue;
 import org.json.simple.JSONAware;
 
 public class GeneralTopologyContext implements JSONAware {
-    private StormTopology _topology;
+    
+	private static final String ACK_STREAM_SEPARATOR = "|";
+	
+	private StormTopology _topology;
     private Map<Integer, String> _taskToComponent;
     private Map<String, List<Integer>> _componentToTasks;
     private Map<String, Map<String, Fields>> _componentToStreamToFields;
     private String _stormId;
     protected Map _stormConf;
+    
+    private static enum AckStreamFields {
+		tupeId,
+		ackMsg;
+	}
     
     // pass in componentToSortedTasks for the case of running tons of tasks in single executor
     public GeneralTopologyContext(StormTopology topology, Map stormConf,
@@ -54,6 +65,7 @@ public class GeneralTopologyContext implements JSONAware {
         _stormId = stormId;
         _componentToTasks = componentToSortedTasks;
         _componentToStreamToFields = componentToStreamToFields;
+        updateAckingComponentOutputFields();
     }
 
     /**
@@ -199,17 +211,43 @@ public class GeneralTopologyContext implements JSONAware {
     }
     
     // RK ADDED
-    public void setComponentOutputFields(String componentId, String streamId, Fields fields) {
-    	Map<String, Fields> currMap = new HashMap<String, Fields>();
-    	if(_componentToStreamToFields.containsKey(componentId)) {
-        	currMap = _componentToStreamToFields.get(componentId);
-        }
+    public void updateAckingComponentOutputFields() {
     	
-    	List<String> newFields = fields.toList();
-    	if(currMap.containsKey(streamId)) {
-    		newFields.addAll(currMap.get(streamId).toList());
-    		currMap.put(streamId, new Fields(newFields));
+    	HashSet<String> ackStreams = new HashSet<String>();
+    	if(null != _stormConf.get(Configuration.send_ack.name())) {
+    		
+    		String[] ackStreamArray = ((String)_stormConf.get(Configuration.send_ack.name())).split("[*"+ACK_STREAM_SEPARATOR+"*]+");
+    		for(int i = 0; i < ackStreamArray.length; ++i) {
+    			if(!ackStreamArray[i].trim().isEmpty()) {
+    				ackStreams.add(ackStreamArray[i].trim());
+    				System.out.println("Fetching Ack Stream {" + ackStreamArray[i].trim() +"}");
+    			}
+    		}
     	}
-    	_componentToStreamToFields.put(componentId, currMap);
+    	
+    	List<String> fields = new ArrayList<String>();
+		fields.add(AckStreamFields.tupeId.name());
+		fields.add(AckStreamFields.ackMsg.name());
+
+		for(String stream : ackStreams) {
+
+			System.out.println("Adding fields {" + fields.toString() + "} to stream {" + stream +"}");
+
+			Map<String, Fields> currMap = new HashMap<String, Fields>();
+			// TODO: this is not the right way to get the component. but cannot think of any other better way to do this
+			String componentId = stream.substring(0, stream.indexOf('_')+1); 
+	    	if(_componentToStreamToFields.containsKey(componentId)) {
+	        	currMap = _componentToStreamToFields.get(componentId);
+	        }
+	    	
+	    	List<String> newFields = new ArrayList<String>(fields);
+	    	if(currMap.containsKey(stream)) {
+	    		newFields.addAll(currMap.get(stream).toList());
+	    		currMap.put(stream, new Fields(newFields));
+	    	}
+	    	_componentToStreamToFields.put(componentId, currMap);
+		}
+    	
     }
+	
 }

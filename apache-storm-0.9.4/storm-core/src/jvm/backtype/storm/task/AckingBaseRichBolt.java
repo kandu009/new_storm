@@ -30,11 +30,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 
-	private static enum AckStreamFields {
-		tupeId,
-		ackMsg;
-	}
-	
 	public static Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
 
 	private static final Integer ROTATING_MAP_BUCKET_SIZE = 3;
@@ -344,24 +339,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				LOG.info("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
 		}
-		
-		updateFieldsForAckStreams();
 	}
 
-	private void updateFieldsForAckStreams() {
-		// these are the fields that we send on the ack stream for all the per edge topology components
-		
-		List<String> fields = new ArrayList<String>();
-		fields.add(AckStreamFields.tupeId.name());
-		fields.add(AckStreamFields.ackMsg.name());
-
-		Fields ackFields = new Fields(fields);
-		for(String stream : sendAckStream_) {
-			declarer_.declareStream(stream, ackFields);
-			context_.setComponentOutputFields(componentId_, stream, ackFields);
-			System.out.println("Adding fields {" + fields.toArray().toString() + "} to stream {" + stream +"}");
-		}
-		
-	}
-	
 }
