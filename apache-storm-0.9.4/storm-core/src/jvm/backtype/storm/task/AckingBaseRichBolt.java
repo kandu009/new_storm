@@ -2,12 +2,15 @@ package backtype.storm.task;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import backtype.storm.generated.Grouping;
+import backtype.storm.generated.StreamInfo;
 import backtype.storm.testing.AckTracker;
+import backtype.storm.topology.AckingOutputFieldsDeclarer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
@@ -221,11 +224,21 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	}
 	
 	public final void declareOutputFields(OutputFieldsDeclarer declarer) {
-		customDeclareOutputFields(declarer);
-		declarer.declare(new Fields(TUPLE_ID_FIELD_NAME));
+		
+		AckingOutputFieldsDeclarer tempDeclarer = new AckingOutputFieldsDeclarer();
+		customDeclareOutputFields(tempDeclarer);
+		
+		Map<String, StreamInfo> fieldsMap = tempDeclarer.getFieldsDeclaration();
+		for(String strId : fieldsMap.keySet()) {
+			// we are adding a tupleId field for all the streamIds that are
+			// possibly used by this component.
+			List<String> newFields = fieldsMap.get(strId).get_output_fields();
+			newFields.add(TUPLE_ID_FIELD_NAME);
+			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
+		}
 	}
 	
-	public abstract void customDeclareOutputFields(OutputFieldsDeclarer declarer);
+	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
 		for(Long at : ackTracker_.keySet()) {

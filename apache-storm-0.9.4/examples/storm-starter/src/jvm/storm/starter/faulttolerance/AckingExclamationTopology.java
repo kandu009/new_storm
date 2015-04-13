@@ -10,6 +10,7 @@ import backtype.storm.spout.SpoutOutputCollector;
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.AckingOutputFieldsDeclarer;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.topology.base.BaseRichSpout;
@@ -152,7 +153,7 @@ public class AckingExclamationTopology {
 			}
 			
 			@Override
-			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer) {
 				declarer.declareStream(B1_B2_SEND_STREAM, new Fields("word"));
 				declarer.declare(new Fields("word"));
 			}
@@ -174,7 +175,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 			
@@ -196,7 +197,7 @@ public class AckingExclamationTopology {
 			}
 			
 			@Override
-			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer) {
 				declarer.declareStream(B3_B4_SEND_STREAM, new Fields("word"));
 				declarer.declare(new Fields("word"));
 			}
@@ -219,7 +220,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 		};
@@ -234,7 +235,7 @@ public class AckingExclamationTopology {
 			}
 
 			@Override
-			public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
+			public void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer) {
 				declarer.declare(new Fields("word"));
 			}
 			
