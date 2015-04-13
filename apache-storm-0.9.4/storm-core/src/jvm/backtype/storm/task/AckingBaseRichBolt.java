@@ -139,6 +139,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emit(ackingStreamId, vals);
+		System.out.println("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 		LOG.info("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 	}
 
@@ -174,6 +175,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
+                		System.out.println("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
@@ -197,8 +199,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				// TODO RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
 				// is true in execute() method
 				collector_.emit(streamId, tuple, newVals);
+				System.out.println("Emitting tuple {" + tupleId + "} on {" + streamId +"}");
 				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"}");
 			} else {
+				System.out.println("Emitting tuple {" + tupleId + "} on { default stream }");
 				LOG.debug("Emitting tuple {" + tupleId + "} on { default stream }");
 				collector_.emit(streamId, newVals);
 			}
@@ -243,6 +247,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
+				System.out.println("Acking Tuple {" + tupleKey + "}");
 				LOG.info("Acking Tuple {" + tupleKey + "}");
 				rmap.remove(tupleKey);
 			}
@@ -260,17 +265,20 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(!ackTracker_.containsKey(timeouts_.get(i))) {
 				RotatingMap<String, Tuple> rmap = new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE);
 				ackTracker_.put(timeouts_.get(i), rmap);
+				System.out.println("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
 				LOG.info("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
 			}
 		}
 		
 		// we should also add a tracker for default per edge timeouts.
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
+		System.out.println("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 		LOG.info("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 	}
 	
 	private void updateTimeouts(Object timeouts) {
 		if(timeouts == null) {
+			System.out.println("There are no additional timeouts specified, will use the default per edge timeout !!!");
 			LOG.info("There are no additional timeouts specified, will use the default per edge timeout !!!");
 			return;
 		}
@@ -286,6 +294,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], timeoutToks[2]), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
+					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 					LOG.info("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 				} catch (Exception e) {
 				}
@@ -295,6 +304,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	private void updateAckStreams(Object ackStreams) {
 		if(ackStreams == null) {
+			System.out.println("There are no Ack Streams, we should be good !!!");
 			LOG.info("There are no Ack Streams, we should be good !!!");
 			return;
 		}
@@ -305,6 +315,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(int i = 0; i < ackStreamArray.length; ++i) {
 			if(!ackStreamArray[i].trim().isEmpty()) {
 				sendAckStream_.add(ackStreamArray[i].trim());
+				System.out.println("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 				LOG.info("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
 		}
