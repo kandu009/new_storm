@@ -102,6 +102,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		checkForTimedOutTuples();
 		
 		if(tuple.getValue(ACTUAL_MESSAGE_INDEX).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
+			System.out.println("Received an Ack message {" + tuple.getValue(ACTUAL_MESSAGE_INDEX).toString() +"}");
 			handleAckMessage(tuple);
 			return;
 		}
@@ -156,10 +157,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
+		System.out.println("In handleAckMessage");
 		if(ACK_MESSAGE_TOKEN_LENGTH == ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
 			findAndAckTuple(tupleKey);
 		}
+		System.out.println("Exiting handleAckMessage");
 		
 	}
 
@@ -170,10 +173,20 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void checkForTimedOutTuples() {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
+		System.out.println("In checkForTimedOutTuples");
+		StringBuilder sb = new StringBuilder().append("Ack Trackers are :");
+		for(Long timeout : ackTracker_.keySet()) {
+			sb.append(timeout).append(",");
+		}
+		System.out.println(sb.toString());
+		
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
 			if(now - lastRotate_ > timeout) {
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
+				if(failed.isEmpty()) {
+					System.out.println("No failed Tuples in this Bucket !!!");
+				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
                 		System.out.println("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
@@ -184,6 +197,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 			lastRotate_ = now;
 		}
+		System.out.println("exiting checkForTimedOutTuples");
 	}
 
 	/**
@@ -245,6 +259,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
+		if(ackTracker_.isEmpty()) {
+			System.out.println("findAndAckTuple trackers empty");
+		}
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
@@ -253,6 +270,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				rmap.remove(tupleKey);
 			}
 		}
+		System.out.println("Exiting findAndAckTuple");
 	}
 	
 	/**
@@ -266,20 +284,17 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(!ackTracker_.containsKey(timeouts_.get(i))) {
 				RotatingMap<String, Tuple> rmap = new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE);
 				ackTracker_.put(timeouts_.get(i), rmap);
-				System.out.println("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
 				LOG.info("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
 			}
 		}
 		
 		// we should also add a tracker for default per edge timeouts.
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
-		System.out.println("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 		LOG.info("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 	}
 	
 	private void updateTimeouts(Object timeouts) {
 		if(timeouts == null) {
-			System.out.println("There are no additional timeouts specified, will use the default per edge timeout !!!");
 			LOG.info("There are no additional timeouts specified, will use the default per edge timeout !!!");
 			return;
 		}
@@ -295,7 +310,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], timeoutToks[2]), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
-					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 					LOG.info("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 				} catch (Exception e) {
 				}
@@ -305,7 +319,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	private void updateAckStreams(Object ackStreams) {
 		if(ackStreams == null) {
-			System.out.println("There are no Ack Streams, we should be good !!!");
 			LOG.info("There are no Ack Streams, we should be good !!!");
 			return;
 		}
@@ -316,7 +329,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(int i = 0; i < ackStreamArray.length; ++i) {
 			if(!ackStreamArray[i].trim().isEmpty()) {
 				sendAckStream_.add(ackStreamArray[i].trim());
-				System.out.println("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 				LOG.info("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
 		}
