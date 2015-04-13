@@ -269,6 +269,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		List<String> ackFields = new ArrayList<String>();
 		ackFields.add(AckStreamFields.tupeId.name());
 		ackFields.add(AckStreamFields.ackMsg.name());
+		if(sendAckStream_.isEmpty()) {
+			System.out.println("sendAckStream_ is empty");
+		}
+		StringBuilder sb = new StringBuilder();
+		for(String stream : sendAckStream_) {
+			sb.append(stream);
+		}
+		System.out.println(sb.toString());
 		for(String stream : sendAckStream_) {
 			declarer.declareStream(stream, new Fields(ackFields));
 			System.out.println("Adding fields {" + ackFields.toArray().toString() + "} to stream {" + stream +"}");
