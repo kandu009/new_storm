@@ -18,7 +18,7 @@ import backtype.storm.task.TopologyContextConstants.Configuration;
 @Deprecated
 // this was initially written to get an idea of what all actions 
 // needs to be performed for supporting per edge timeout mechanism
-public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
+public abstract class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 
 	public enum SendReceiveToken {
 		send_msg,
@@ -184,12 +184,6 @@ public class AckingExclamationBoltDeprecated extends AckingBaseRichBolt {
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void customDeclareOutputFields(OutputFieldsDeclarer declarer) {
 		// TODO Auto-generated method stub
 		
 	}

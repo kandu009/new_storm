@@ -39,7 +39,7 @@ public class AckingExclamationTopologyDeprecated {
 		builder.setSpout(SPOUT, new TestWordSpout(), 10)
 				.addConfiguration(SendReceiveToken.send_msg.name(), SPOUT_SEND_STREAM);
 		
-		builder.setBolt(EXCLAIM_BOLT1, new AckingExclamationBoltDeprecated(), 3)
+		/*builder.setBolt(EXCLAIM_BOLT1, new AckingExclamationBoltDeprecated(), 3)
 				.addConfiguration(SendReceiveToken.send_msg.name(), new ArrayList<SendStreamTimeoutPair>(Arrays.asList(new SendStreamTimeoutPair(B1_SEND_STREAM, 100))))
 				.addConfiguration(SendReceiveToken.receive_msg.name(), new ArrayList<String>(Arrays.asList(SPOUT_SEND_STREAM)))
 				.addConfiguration(Configuration.send_ack.name(), new ArrayList<String>()) // TODO: just added this to get some clarity on the initial design 
@@ -68,7 +68,7 @@ public class AckingExclamationTopologyDeprecated {
 
 			StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
 					builder.createTopology());
-		}
+		}*/
 	}
 
 }
