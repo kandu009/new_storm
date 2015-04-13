@@ -1,5 +1,6 @@
 package backtype.storm.task;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -9,8 +10,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StreamInfo;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import backtype.storm.spout.ShellSpout;
 import backtype.storm.testing.AckTracker;
 import backtype.storm.topology.AckingOutputFieldsDeclarer;
@@ -26,6 +29,11 @@ import backtype.storm.task.TopologyContextConstants.Configuration;
 public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
+
+	private static enum AckStreamFields {
+		tupeId,
+		ackMsg;
+	}
 	
 	public static Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
 
@@ -255,6 +263,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			List<String> newFields = fieldsMap.get(strId).get_output_fields();
 			newFields.add(TUPLE_ID_FIELD_NAME);
 			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
+		}
+		
+		// these are the fields that we send on the ack stream for all the per edge topology components
+		List<String> ackFields = new ArrayList<String>();
+		ackFields.add(AckStreamFields.tupeId.name());
+		ackFields.add(AckStreamFields.tupeId.name());
+		for(String stream : sendAckStream_) {
+			declarer.declareStream(stream, new Fields(ackFields));
 		}
 	}
 	
