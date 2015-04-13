@@ -23,7 +23,6 @@ import backtype.storm.generated.ComponentCommon;
 import backtype.storm.generated.GlobalStreamId;
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StormTopology;
-import backtype.storm.task.AckingBaseRichBolt.AckStreamFields;
 import backtype.storm.task.TopologyContextConstants.Configuration;
 import backtype.storm.tuple.Fields;
 import backtype.storm.utils.ThriftTopologyUtils;
