@@ -83,8 +83,11 @@ public class AckingExclamationTopology {
 			// this is to make sure that we are always sending the TupleId in
 			// tuple[0] and the actual message only starts from tuple[1]
 	        String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+	        
+	        Values vals = new Values(tupleId);
+	        vals.add(word);
+
 	        if(enableStormsTimeoutMechanism_) {
-	        	
 	        	//TODO: RKNOTE 
 	        	// since we want Storm to track the tuples and its acks here
 	        	// we need to give some messageId to emit (3rd argument).
@@ -92,9 +95,9 @@ public class AckingExclamationTopology {
 	        	// But is this messageId needed in every bolt for acking?
 	        	// or can we just not worry about it as long as the tuple is 
 	        	// anchored and acked/failed?
-	        	_collector.emit(SPOUT_SEND_STREAM, new Values(tupleId, word), tupleId);
+	        	_collector.emit(SPOUT_SEND_STREAM, vals, tupleId);
 	        } else {
-	        	_collector.emit(SPOUT_SEND_STREAM, new Values(tupleId, word));
+	        	_collector.emit(SPOUT_SEND_STREAM, vals);
 	        }
 	    }
 	  
@@ -146,9 +149,9 @@ public class AckingExclamationTopology {
 				// other fancy stuff other than the message
 				// which is a simple string in this case.
 				if(sendToB2_) {
-					emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B1!"), B1_B2_SEND_STREAM);
+					emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B1!")), B1_B2_SEND_STREAM);
 				} else {
-					emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B1!"));
+					emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B1!")));
 				}
 			}
 			
@@ -171,7 +174,7 @@ public class AckingExclamationTopology {
 				// needed.
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B2!"));
+				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B2!")));
 			}
 
 			@Override
@@ -193,7 +196,7 @@ public class AckingExclamationTopology {
 				// needed.
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B3!"), B3_B4_SEND_STREAM);
+				emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B3!")), B3_B4_SEND_STREAM);
 			}
 			
 			@Override
@@ -215,7 +218,7 @@ public class AckingExclamationTopology {
 				// needed.
 				// As bolt2 and bolt3 are sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX) + "!B4!"));
+				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B4!")));
 				//TODO: shouldn't we ack tuples if enableStormDefaultTimeout_ is true ?????? in AckingBaseRichBolt
 			}
 

@@ -134,8 +134,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// this is to make sure that all messages that we send from an
 				// AckingBolt has the first tuple field as tupleId
 		String tupleId = getTupleId(componentId_, tuple.getSourceComponent(), ackingStreamId);
-		
-		collector_.emit(ackingStreamId, new Values(tupleId, ackMsg.toString()));
+		Values vals = new Values(tupleId);
+		vals.add(ackMsg.toString());
+		collector_.emit(ackingStreamId, vals);
 		
 	}
 
@@ -190,16 +191,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(String targetId : getTargetsForStream(streamId)) {
 			
 			String tupleId = getTupleId(componentId_, targetId, streamId);
+			Values newVals = new Values(tupleId);
+			newVals.addAll(values);
 			if(enableStormDefaultTimeout_) {
-				
-				//TODO: check if Values object can be created like this
-				
 				// TODO RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
 				// is true in execute() method
-				collector_.emit(streamId, tuple, new Values(tupleId, values));
+				collector_.emit(streamId, tuple, newVals);
 			} else {
-				//TODO: check if Values object can be created like this
-				collector_.emit(streamId, new Values(tupleId, values));
+				collector_.emit(streamId, newVals);
 			}
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
