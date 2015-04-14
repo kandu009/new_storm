@@ -91,6 +91,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		createAckTrackersPerTimeout();
 		
 		customPrepare(conf, context, collector);
+		updateAckingComponentOutputFields();
 		
 	}
 
@@ -266,7 +267,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			newFields.add(TUPLE_ID_FIELD_NAME);
 			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
 		}
-		updateAckingComponentOutputFields();
 	}
 	
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
