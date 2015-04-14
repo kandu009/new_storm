@@ -26,6 +26,7 @@ import backtype.storm.tuple.Values;
 import backtype.storm.utils.RotatingMap;
 import backtype.storm.utils.Utils;
 import backtype.storm.task.TopologyContextConstants.Configuration;
+import org.json.simple.JSONValue;
 
 public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
@@ -350,7 +351,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
     public HashSet<String> perEdgeAckStreams() {
         ComponentCommon common = context_.getComponentCommon(componentId_);
         if(common == null) {
-        	System.out.println("Could not find any component with ID {" + compId + "}");
+        	System.out.println("Could not find any component with ID {" + componentId_ + "}");
         	return new HashSet<String>();
         }
        
