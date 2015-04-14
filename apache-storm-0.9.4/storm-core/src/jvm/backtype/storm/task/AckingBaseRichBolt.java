@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import backtype.storm.generated.ComponentCommon;
 import backtype.storm.generated.Grouping;
 import backtype.storm.generated.StreamInfo;
 
@@ -30,6 +31,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 
+	private static enum AckStreamFields {
+		tupleId, 
+		ackMsg;
+	}
+	
 	public static Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
 
 	private static final Integer ROTATING_MAP_BUCKET_SIZE = 3;
@@ -53,7 +59,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private Long defaultPerEdgeTimeout_;
 	private Boolean enableStormDefaultTimeout_;
 	private TopologyContext context_;
-	private OutputFieldsDeclarer declarer_;
 	
 	// since this is just constructed once and read everywhere else, it should
 	// be fine even in case of multi threaded environment
@@ -260,7 +265,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			newFields.add(TUPLE_ID_FIELD_NAME);
 			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
 		}
-		declarer_ = declarer;
+		updateAckingComponentOutputFields();
 	}
 	
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
@@ -340,5 +345,46 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 		}
 	}
+
+    //RK ADDED
+    public HashSet<String> perEdgeAckStreams() {
+        ComponentCommon common = context_.getComponentCommon(componentId_);
+        if(common == null) {
+        	System.out.println("Could not find any component with ID {" + compId + "}");
+        	return new HashSet<String>();
+        }
+       
+        String jsonConf = common.get_json_conf();
+        String ackStreams = new String();
+        if(jsonConf!=null) {
+            Map conf = (Map) JSONValue.parse(jsonConf);
+            Object comp = conf.get(Configuration.send_ack.name());
+            System.out.println("Found the send_ack data for {" + componentId_ + "} !!!");
+            ackStreams = Utils.getString(comp, new String());
+        }
+        if(ackStreams.isEmpty()) {
+        	System.out.println("Could not find send_ack data for {" + componentId_ +"}");
+        	return new HashSet<String>();
+        }
+        
+        HashSet<String> ret = new HashSet<String>();
+        String[] ackStreamArray = ackStreams.split("[*"+ACK_STREAM_SEPARATOR+"*]+");
+		for(int i = 0; i < ackStreamArray.length; ++i) {
+			if(!ackStreamArray[i].trim().isEmpty()) {
+				ret.add(ackStreamArray[i].trim());
+				System.out.println("Fetching Ack Stream {" + ackStreamArray[i].trim() +"}");
+			}
+		}
+        return ret;
+        
+    }
+    
+    // RK ADDED
+    public void updateAckingComponentOutputFields() {
+		List<String> fields = new ArrayList<String>();
+		fields.add(AckStreamFields.tupleId.name());
+		fields.add(AckStreamFields.ackMsg.name());
+		context_.updateAckingComponentOutputFields(perEdgeAckStreams(), fields, componentId_);
+    }
 
 }

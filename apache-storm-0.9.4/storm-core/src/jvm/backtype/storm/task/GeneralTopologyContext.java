@@ -48,12 +48,7 @@ public class GeneralTopologyContext implements JSONAware {
     private Map<String, Map<String, Fields>> _componentToStreamToFields;
     private String _stormId;
     protected Map _stormConf;
-    
-    private static enum AckStreamFields {
-		tupeId,
-		ackMsg;
-	}
-    
+
     // pass in componentToSortedTasks for the case of running tons of tasks in single executor
     public GeneralTopologyContext(StormTopology topology, Map stormConf,
             Map<Integer, String> taskToComponent, Map<String, List<Integer>> componentToSortedTasks,
@@ -64,7 +59,6 @@ public class GeneralTopologyContext implements JSONAware {
         _stormId = stormId;
         _componentToTasks = componentToSortedTasks;
         _componentToStreamToFields = componentToStreamToFields;
-        updateAckingComponentOutputFields();
     }
 
     /**
@@ -209,65 +203,26 @@ public class GeneralTopologyContext implements JSONAware {
         return max;
     }
     
-    //RK ADDED
-    public String perEdgeAckStreams(String compId) {
-    	// TODO: For now, we only search in bolts. If we add per edge acking to spouts too
-    	// then we should add that too
-        ComponentCommon common = getComponentCommon(compId);
-        if(common == null) {
-        	System.out.println("Could not find any component with ID {" + compId + "}");
-        	return new String();
-        }
-       
-        String jsonConf = common.get_json_conf();
-        if(jsonConf!=null) {
-            Map conf = (Map) JSONValue.parse(jsonConf);
-            Object comp = conf.get(Configuration.send_ack.name());
-            System.out.println("Found the send_ack data for {" + compId + "} !!!");
-            return Utils.getString(comp, new String());
-        }
-        System.out.println("Could not find send_ack data for {" + compId +"}");
-        return new String();
-    }
-    
-    // RK ADDED
-    public void updateAckingComponentOutputFields() {
-    	for(String bolt: getRawTopology().get_bolts().keySet()) {
-    		String streams = perEdgeAckStreams(bolt); 
-    		if(streams.isEmpty()) {
-    			System.out.println("No acking streams for this component {" + bolt + "}");
-    			continue;
-    		}
-    		
-    		HashSet<String> ackStreams = new HashSet<String>();
-    		String[] ackStreamArray = streams.split("[*"+ACK_STREAM_SEPARATOR+"*]+");
-    		for(int i = 0; i < ackStreamArray.length; ++i) {
-    			if(!ackStreamArray[i].trim().isEmpty()) {
-    				ackStreams.add(ackStreamArray[i].trim());
-    				System.out.println("Fetching Ack Stream {" + ackStreamArray[i].trim() +"}");
-    			}
-    		}
-    		
-    		List<String> fields = new ArrayList<String>();
-    		fields.add(AckStreamFields.tupeId.name());
-    		fields.add(AckStreamFields.ackMsg.name());
+	public void updateAckingComponentOutputFields(
+			HashSet<String> perEdgeAckStreams, List<String> fields,
+			String compId) {
 
-    		for(String ackStream : ackStreams) {
-    			System.out.println("Adding fields {" + fields.toString() + "} to stream {" + ackStream +"}");
-    			Map<String, Fields> currMap = new HashMap<String, Fields>();
-    	    	if(_componentToStreamToFields.containsKey(bolt)) {
-    	        	currMap = _componentToStreamToFields.get(bolt);
-    	        }
-    	    	
-    	    	List<String> newFields = new ArrayList<String>(fields);
-    	    	if(currMap.containsKey(ackStream)) {
-    	    		newFields.addAll(currMap.get(ackStream).toList());
-    	    		currMap.put(ackStream, new Fields(newFields));
-    	    	}
-    	    	System.out.println("Added new fields {"+newFields.toString()+"} to _componentToStreamToFields for bolt {" + bolt + "}");
-    	    	_componentToStreamToFields.put(bolt, currMap);
-    		}
-    	}
-    }
+		for(String ackStream : perEdgeAckStreams) {
+			
+    		System.out.println("Adding fields {" + fields.toString() + "} to stream {" + ackStream +"}");
+			Map<String, Fields> currMap = new HashMap<String, Fields>();
+	    	if(_componentToStreamToFields.containsKey(compId)) {
+	        	currMap = _componentToStreamToFields.get(compId);
+	        }
+	    	
+	    	List<String> newFields = new ArrayList<String>(fields);
+	    	if(currMap.containsKey(ackStream)) {
+	    		newFields.addAll(currMap.get(ackStream).toList());
+	    		currMap.put(ackStream, new Fields(newFields));
+	    	}
+	    	System.out.println("Added new fields {"+newFields.toString()+"} to _componentToStreamToFields for bolt {" + compId + "}");
+	    	_componentToStreamToFields.put(compId, currMap);
+		}
+	}
 	
 }
