@@ -264,7 +264,7 @@ public class GeneralTopologyContext implements JSONAware {
     	    		newFields.addAll(currMap.get(ackStream).toList());
     	    		currMap.put(ackStream, new Fields(newFields));
     	    	}
-    	    	System.out.println("Added new fields to _componentToStreamToFields for bolt {" + bolt + "}");
+    	    	System.out.println("Added new fields {"+newFields.toString()+"} to _componentToStreamToFields for bolt {" + bolt + "}");
     	    	_componentToStreamToFields.put(bolt, currMap);
     		}
     	}
