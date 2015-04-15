@@ -292,9 +292,18 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			String[] timeoutToks = timeoutsMap[i].split("[*"+TIMEOUT_DELIMITER+"*]+");
 			if(timeoutToks.length >= 4) {
 				try {
+					String streamId = new String();
+					//TODO: I did not realize that having '_' in a streamId would lead to all these issues,
+					//need to comeup with different separators for different stuff
+					int k = 2;
+					while(k < timeoutToks.length-1) {
+						streamId.concat(timeoutToks[k]);
+						++k;
+					}
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
-							timeoutToks[1], timeoutToks[2]), 
+							timeoutToks[1], streamId), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
+					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "} for {" + timeoutToks[0] +", " + timeoutToks[1] + ", " + streamId);
 					LOG.info("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 				} catch (Exception e) {
 				}
