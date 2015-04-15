@@ -50,4 +50,22 @@ public class TimeoutIdentifier {
 		this.targetId_ = targetId_;
 	}
 	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null) {
+			return false;
+		}
+		if(obj instanceof TimeoutIdentifier) {
+			return (this.sourceId_.equals(((TimeoutIdentifier)obj).sourceId_) &&
+					this.targetId_.equals(((TimeoutIdentifier)obj).targetId_) &&
+					this.streamId_.equals(((TimeoutIdentifier)obj).streamId_));
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		return sourceId_.hashCode() ^ targetId_.hashCode() ^ streamId_.hashCode();
+	}
+	
 }

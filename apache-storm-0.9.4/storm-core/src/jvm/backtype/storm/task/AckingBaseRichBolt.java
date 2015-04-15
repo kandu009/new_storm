@@ -144,7 +144,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emit(ackingStreamId, vals);
-		LOG.info("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
+		LOG.debug("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 	}
 
 	/**
@@ -152,21 +152,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	 * accordingly
 	 */
 	private void handleAckMessage(Tuple tuple) {
-		
 		// this will be of form ack_tupleId_componentId_streamID
 		// we are assuming that the tuple[0] will have the tuple ID, 
 		// we will not use tupleId for acking messages. 
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
-		System.out.println("In handleAckMessage");
 		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
-			System.out.println("TupleKey { " + tupleKey + "} sending to ack this !");
 			findAndAckTuple(tupleKey);
 		}
-		System.out.println("Exiting handleAckMessage");
-		
 	}
 
 	// this checks if there are any tuples which are not acked within the
@@ -181,7 +176,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(now - lastRotate_ > timeout) {
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
-					System.out.println("No failed Tuples in this Bucket !!!");
+					LOG.debug("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
@@ -254,18 +249,13 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
-		if(ackTracker_.isEmpty()) {
-			System.out.println("findAndAckTuple trackers empty");
-		}
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				System.out.println("Acking Tuple {" + tupleKey + "}");
-				LOG.info("Acking Tuple {" + tupleKey + "}");
+				LOG.debug("Acking Tuple with key {" + tupleKey + "}");
 				rmap.remove(tupleKey);
 			}
 		}
-		System.out.println("Exiting findAndAckTuple");
 	}
 	
 	/**

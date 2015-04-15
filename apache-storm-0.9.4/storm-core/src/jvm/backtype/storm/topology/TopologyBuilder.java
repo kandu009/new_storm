@@ -444,6 +444,7 @@ public class TopologyBuilder {
 			}
 		}
 		
+		// if the streams are ack streams, then add the fields to the stream 
 		HashMap<String, StreamInfo> tempStreams = new HashMap<String, StreamInfo>(streams);
 		for(String sid: tempStreams.keySet()) {
         	if(ackStreamSet.contains(sid)) {
@@ -451,7 +452,6 @@ public class TopologyBuilder {
         		List<String> newFields = new ArrayList<String>(ackFields);
         		newFields.addAll(oldValue.get_output_fields());
         		StreamInfo newValue = new StreamInfo(newFields, oldValue.is_direct());
-        		System.out.println("Adding fields " + newFields.toString() + " to the ack stream {" + sid +"}");
         		streams.put(sid, newValue);
         	}
         }
