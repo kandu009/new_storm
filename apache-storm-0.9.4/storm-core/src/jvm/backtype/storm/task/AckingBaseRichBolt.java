@@ -216,21 +216,21 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
 			Values newVals = new Values(tupleId);
 			newVals.addAll(values);
-			if(enableStormDefaultTimeout_) {
 				// TODO RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
+			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, tuple, newVals);
-				System.out.println("Emitting tuple {" + tupleId + "} on {" + streamId +"}");
-				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"}");
+				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} with enableStormDefaultTimeout_ set to true");
 			} else {
-				System.out.println("Emitting tuple {" + tupleId + "} on { default stream }");
-				LOG.debug("Emitting tuple {" + tupleId + "} on { default stream }");
+				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} with enableStormDefaultTimeout_ set to false");
 				collector_.emit(streamId, newVals);
 			}
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
-			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_; 
+			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
+			System.out.println("Found timeout { " + timeout + "} for identifier {" + componentId_ + ", " + targetId +", " + streamId +"}");
 			ackTracker_.get(timeout).put(tupleId, tuple);
+			System.out.println("Adding the tuple {" + tupleId + "} to ack Tracker !");
 		}
 		
 	}
@@ -258,6 +258,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			// possibly used by this component.
 			List<String> newFields = fieldsMap.get(strId).get_output_fields();
 			newFields.add(TUPLE_ID_FIELD_NAME);
+			LOG.debug("Adding a custom field {" + TUPLE_ID_FIELD_NAME + "} to the stream {" + strId + "}");
 			declarer.declareStream(strId, fieldsMap.get(strId).is_direct(), new Fields(newFields));
 		}
 	}

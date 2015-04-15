@@ -130,14 +130,13 @@ public class AckingExclamationTopology {
 			
 			private static final long serialVersionUID = 1L;
 			// this just gives you index in tuple which holds the incoming message
-			private static final int MESSAGE_INDEX = 0;
+			private static final int MESSAGE_INDEX = 1;
 			// this is just to send messages to EXCLAIM_BOLT2 and EXCLAIM_BOLT3 alternately
 			private Boolean sendToB2_ = new Boolean(true);
 			
 			@Override
 			public void customPrepare(Map conf, TopologyContext context,
 					OutputCollector collector) {
-				System.out.println("Setting sendToB2_ to true!!!");
 				sendToB2_ = new Boolean(true);
 			}
 			
@@ -149,12 +148,11 @@ public class AckingExclamationTopology {
 				// other fancy stuff other than the message
 				// which is a simple string in this case.
 				if(sendToB2_) {
-					System.out.println("In customExecute of bolt1");
 					emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B1!")), B1_B2_SEND_STREAM);
+					sendToB2_ = !sendToB2_;
 				} else {
 					emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B1!")));
 				}
-				System.out.println("Exiting customExecute of bolt1");
 			}
 			
 			@Override
@@ -172,13 +170,11 @@ public class AckingExclamationTopology {
 			
 			@Override
 			public void customExecute(Tuple tuple) {
-				// TODO: I am assuming that getString(1) has the information
+				// I am assuming that getString(1) has the information
 				// needed.
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				System.out.println("In customExecute of bolt2");
 				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B2!")));
-				System.out.println("Exiting customExecute of bolt2");
 			}
 
 			@Override
@@ -200,9 +196,7 @@ public class AckingExclamationTopology {
 				// needed.
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				System.out.println("In customExecute of bolt3");
 				emitTupleOnStream(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B3!")), B3_B4_SEND_STREAM);
-				System.out.println("Exiting customExecute of bolt3");
 			}
 			
 			@Override
@@ -224,10 +218,7 @@ public class AckingExclamationTopology {
 				// needed.
 				// As bolt2 and bolt3 are sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				System.out.println("In customExecute of bolt4");
 				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B4!")));
-				System.out.println("Exiting customExecute of bolt4");
-				//TODO: shouldn't we ack tuples if enableStormDefaultTimeout_ is true ?????? in AckingBaseRichBolt
 			}
 
 			@Override
@@ -242,9 +233,7 @@ public class AckingExclamationTopology {
 
 			@Override
 			public void customExecute(Tuple tuple) {
-				System.out.println("In customExecute of bolt5");
-				System.out.println("Exiting customExecute of bolt5");
-				// TODO: RK NOTE we just ack the tuples if enableStormDefaultTimeout_ here in @AckingBaseRichBolt
+				// RK NOTE we just ack the tuples if enableStormDefaultTimeout_ here in @AckingBaseRichBolt
 			}
 
 			@Override
