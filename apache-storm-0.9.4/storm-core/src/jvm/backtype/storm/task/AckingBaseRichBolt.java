@@ -38,12 +38,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private static final String TIMEOUTS_SEPARATOR = "|";
 	private static final String ACK_STREAM_SEPARATOR = "|";
 	private static final String TIMEOUT_DELIMITER = "_";
-	private static final int ACK_MESSAGE_TOKEN_LENGTH = 5;
+	private static final int ACK_MESSAGE_TOKEN_LENGTH = 2;
 	private static final String ACK_MESSAGE_START_TOKEN = "ack_";
 
 	private static final String TUPLE_ID_SEPARATOR = "_";
 	private static final int ACTUAL_MESSAGE_INDEX = 1;
-	private static final int TUPLE_ID_INDEX = 1;
+	private static final int TUPLE_ID_INDEX = 0;
 	private static String TUPLE_ID_FIELD_NAME = "_tupleId";
 	
 	//TODO: are all of these thread safe? we should be able to support a parallelism > 1
@@ -103,12 +103,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	public final void execute(Tuple tuple) {
 		
-		System.out.println("Received a tuple {" + tuple.getString(0) + "}, {" + tuple.getString(1) +"}");
-		
 		checkForTimedOutTuples();
 		
 		if(tuple.getValue(ACTUAL_MESSAGE_INDEX).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
-			System.out.println("Received an Ack message {" + tuple.getValue(ACTUAL_MESSAGE_INDEX).toString() +"}");
 			handleAckMessage(tuple);
 			return;
 		}
@@ -147,7 +144,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emit(ackingStreamId, vals);
-		System.out.println("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}, msg {" + ackMsg +"}");
 		LOG.info("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 	}
 
@@ -164,8 +160,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
 		System.out.println("In handleAckMessage");
-		if(ACK_MESSAGE_TOKEN_LENGTH == ackToks.length) {
+		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
+			System.out.println("TupleKey { " + tupleKey + "} sending to ack this !");
 			findAndAckTuple(tupleKey);
 		}
 		System.out.println("Exiting handleAckMessage");
@@ -179,13 +176,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void checkForTimedOutTuples() {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
-		System.out.println("In checkForTimedOutTuples");
-		StringBuilder sb = new StringBuilder().append("Ack Trackers are :");
-		for(Long timeout : ackTracker_.keySet()) {
-			sb.append(timeout).append(",");
-		}
-		System.out.println(sb.toString());
-		
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
 			if(now - lastRotate_ > timeout) {
@@ -195,7 +185,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
-                		System.out.println("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
@@ -203,7 +192,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 			lastRotate_ = now;
 		}
-		System.out.println("exiting checkForTimedOutTuples");
 	}
 
 	/**
