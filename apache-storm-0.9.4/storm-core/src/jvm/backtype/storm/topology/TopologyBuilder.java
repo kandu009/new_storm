@@ -36,6 +36,7 @@ import java.security.acl.Group;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -97,6 +98,14 @@ import backtype.storm.task.TopologyContextConstants.Configuration;
  * the inputs for that component.</p>
  */
 public class TopologyBuilder {
+	
+	private static enum AckStreamFields {
+		tupleId, 
+		ackMsg;
+	}
+
+	private static final String ACK_STREAM_SEPARATOR = "|";
+	
     private Map<String, IRichBolt> _bolts = new HashMap<String, IRichBolt>();
     private Map<String, IRichSpout> _spouts = new HashMap<String, IRichSpout>();
     private Map<String, ComponentCommon> _commons = new HashMap<String, ComponentCommon>();
@@ -213,7 +222,7 @@ public class TopologyBuilder {
         		_commons.get(boltId).set_json_conf(JSONValue.toJSONString(currConfMap));
             }
             
-            ComponentCommon common = getComponentCommon(boltId, bolt);
+            ComponentCommon common = getComponentCommon(boltId, bolt, compIdVsAckingStreams.get(boltId));
             boltSpecs.put(boltId, new Bolt(ComponentObject.serialized_java(Utils.serialize(bolt)), common));
         }
         
@@ -404,6 +413,47 @@ public class TopologyBuilder {
         OutputFieldsGetter getter = new OutputFieldsGetter();
         component.declareOutputFields(getter);
         streams.putAll(getter.getFieldsDeclaration());
+        ret.set_streams(streams);
+        return ret;        
+    }
+    
+    private ComponentCommon getComponentCommon(String id, IComponent component, String ackStreams) {
+
+    	ComponentCommon ret = new ComponentCommon(_commons.get(id));
+        
+    	Map<String,StreamInfo> streams = new HashMap<String, StreamInfo>();
+        if(ret.get_streams() != null && !ret.get_streams().isEmpty()) {
+        	streams = ret.get_streams();
+        }
+        
+        OutputFieldsGetter getter = new OutputFieldsGetter();
+        component.declareOutputFields(getter);
+        streams.putAll(getter.getFieldsDeclaration());
+        
+		List<String> ackFields = new ArrayList<String>();
+		ackFields.add(AckStreamFields.tupleId.name());
+		ackFields.add(AckStreamFields.ackMsg.name());
+		
+		HashSet<String> ackStreamSet = new HashSet<String>();
+        String[] ackStreamArray = ackStreams.split("[*"+ACK_STREAM_SEPARATOR+"*]+");
+		for(int i = 0; i < ackStreamArray.length; ++i) {
+			if(!ackStreamArray[i].trim().isEmpty()) {
+				ackStreamSet.add(ackStreamArray[i].trim());
+				System.out.println("Fetching Ack Stream {" + ackStreamArray[i].trim() +"}");
+			}
+		}
+		
+		HashMap<String, StreamInfo> tempStreams = new HashMap<String, StreamInfo>(streams);
+		for(String sid: tempStreams.keySet()) {
+        	if(ackStreamSet.contains(sid)) {
+        		StreamInfo oldValue = tempStreams.get(sid);
+        		List<String> newFields = new ArrayList<String>(ackFields);
+        		newFields.addAll(oldValue.get_output_fields());
+        		StreamInfo newValue = new StreamInfo(newFields, oldValue.is_direct());
+        		streams.put(sid, newValue);
+        	}
+        }
+        
         ret.set_streams(streams);
         return ret;        
     }

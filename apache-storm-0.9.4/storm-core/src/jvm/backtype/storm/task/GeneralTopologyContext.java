@@ -203,26 +203,4 @@ public class GeneralTopologyContext implements JSONAware {
         return max;
     }
     
-	public void updateAckingComponentOutputFields(
-			HashSet<String> perEdgeAckStreams, List<String> fields,
-			String compId) {
-
-		for(String ackStream : perEdgeAckStreams) {
-			
-    		System.out.println("Adding fields {" + fields.toString() + "} to stream {" + ackStream +"}");
-			Map<String, Fields> currMap = new HashMap<String, Fields>();
-	    	if(_componentToStreamToFields.containsKey(compId)) {
-	        	currMap = _componentToStreamToFields.get(compId);
-	        }
-	    	
-	    	List<String> newFields = new ArrayList<String>(fields);
-	    	if(currMap.containsKey(ackStream)) {
-	    		newFields.addAll(currMap.get(ackStream).toList());
-	    		currMap.put(ackStream, new Fields(newFields));
-	    	}
-	    	System.out.println("Added new fields {"+newFields.toString()+"} to _componentToStreamToFields for bolt {" + compId + "}");
-	    	_componentToStreamToFields.put(compId, currMap);
-		}
-	}
-	
 }
