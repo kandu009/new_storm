@@ -430,6 +430,8 @@ public class TopologyBuilder {
         component.declareOutputFields(getter);
         streams.putAll(getter.getFieldsDeclaration());
         
+		// this is to make sure that we are adding the expected fields that a
+		// ack message would send.
 		List<String> ackFields = new ArrayList<String>();
 		ackFields.add(AckStreamFields.tupleId.name());
 		ackFields.add(AckStreamFields.ackMsg.name());
@@ -439,7 +441,6 @@ public class TopologyBuilder {
 		for(int i = 0; i < ackStreamArray.length; ++i) {
 			if(!ackStreamArray[i].trim().isEmpty()) {
 				ackStreamSet.add(ackStreamArray[i].trim());
-				System.out.println("Fetching Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
 		}
 		
@@ -450,6 +451,7 @@ public class TopologyBuilder {
         		List<String> newFields = new ArrayList<String>(ackFields);
         		newFields.addAll(oldValue.get_output_fields());
         		StreamInfo newValue = new StreamInfo(newFields, oldValue.is_direct());
+        		System.out.println("Adding fields " + newFields.toString() + " to the ack stream {" + sid +"}");
         		streams.put(sid, newValue);
         	}
         }

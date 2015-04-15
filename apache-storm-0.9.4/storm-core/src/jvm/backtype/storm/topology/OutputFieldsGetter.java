@@ -25,8 +25,6 @@ import java.util.Map;
 
 public class OutputFieldsGetter implements OutputFieldsDeclarer {
 
-	private static final long serialVersionUID = 1L;
-	
 	private Map<String, StreamInfo> _fields = new HashMap<String, StreamInfo>();
 
     public void declare(Fields fields) {

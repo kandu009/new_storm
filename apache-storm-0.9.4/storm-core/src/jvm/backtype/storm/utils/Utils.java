@@ -466,18 +466,4 @@ public class Utils {
 
         throw new IllegalArgumentException("Don't know how to convert " + o + " to long");
     }
-    
-    public static String getString(Object o, String defaultValue) {
-    	
-        if (null == o) {
-          return defaultValue;
-        }
-
-        if (o instanceof String) {
-            return o.toString();
-        }
-
-        throw new IllegalArgumentException("Don't know how to convert " + o + " to string");
-      }
-    
 }
