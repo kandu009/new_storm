@@ -310,11 +310,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 					int k = 2;
 					System.out.println("Now streamID is {" + streamId.toString() + "}");
 					while(k < timeoutToks.length-1) {
-						System.out.println("Appending {" + timeoutToks[k] +"}");
-						streamId.append(timeoutToks[k]);
+						streamId.append(timeoutToks[k]).append("_");
 						System.out.println("In while, now streamID is {" + streamId.toString() + "}");
 						++k;
 					}
+					if(!streamId.toString().isEmpty()) {
+						streamId.deleteCharAt(streamId.lastIndexOf("_"));
+					}
+					
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], streamId.toString()), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
