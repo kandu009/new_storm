@@ -210,7 +210,15 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
-			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
+			System.out.println("New TI which we want is {" + componentId_ + ", " + targetId + ", " + streamId +"}");
+			/*Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;*/
+			Long timeout = defaultPerEdgeTimeout_;
+			if(timeouts_.containsKey(ti)) {
+				System.out.println("Yes TimeoutIdentifier is contained in out store !!!");
+				timeout = timeouts_.get(ti);
+			} else {
+				System.out.println("Nope, TimeoutIdentifier does not exist, we are using default timeout !!!");
+			}
 			System.out.println("Found timeout { " + timeout + "} for identifier {" + componentId_ + ", " + targetId +", " + streamId +"}");
 			ackTracker_.get(timeout).put(tupleId, tuple);
 			System.out.println("Adding the tuple {" + tupleId + "} to ack Tracker !");
@@ -290,20 +298,27 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String[] timeoutsMap = ((String)timeouts).split("[*"+TIMEOUTS_SEPARATOR+"*]+");
 		for(int i = 0; i < timeoutsMap.length; ++i) {
 			String[] timeoutToks = timeoutsMap[i].split("[*"+TIMEOUT_DELIMITER+"*]+");
+			System.out.println("Total timeoutMap {" + timeoutsMap[i] + "}");
+			for(int p = 0; p < timeoutToks.length; ++p) {
+				System.out.println("Tok {" + p + " is {" + timeoutToks[p] + "}");
+			}
 			if(timeoutToks.length >= 4) {
 				try {
 					String streamId = new String();
 					//TODO: I did not realize that having '_' in a streamId would lead to all these issues,
 					//need to comeup with different separators for different stuff
 					int k = 2;
+					streamId.concat(timeoutToks[k]);
+					System.out.println("Now streamID is {" + streamId + "}");
 					while(k < timeoutToks.length-1) {
 						streamId.concat(timeoutToks[k]);
+						System.out.println("In while, now streamID is {" + streamId + "}");
 						++k;
 					}
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], streamId), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
-					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "} for {" + timeoutToks[0] +", " + timeoutToks[1] + ", " + streamId);
+					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "} for {" + timeoutToks[0] +", " + timeoutToks[1] + ", " + streamId + "}");
 					LOG.info("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
 				} catch (Exception e) {
 				}
