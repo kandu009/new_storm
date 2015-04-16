@@ -304,22 +304,24 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 			if(timeoutToks.length >= 4) {
 				try {
-					String streamId = new String();
+					StringBuilder streamId = new StringBuilder();
 					//TODO: I did not realize that having '_' in a streamId would lead to all these issues,
 					//need to comeup with different separators for different stuff
 					int k = 2;
-					streamId.concat(timeoutToks[k]);
-					System.out.println("Now streamID is {" + streamId + "}");
+					System.out.println("Now streamID is {" + streamId.toString() + "}");
 					while(k < timeoutToks.length-1) {
-						streamId.concat(timeoutToks[k]);
-						System.out.println("In while, now streamID is {" + streamId + "}");
+						System.out.println("Appending {" + timeoutToks[k] +"}");
+						streamId.append(timeoutToks[k]);
+						System.out.println("In while, now streamID is {" + streamId.toString() + "}");
 						++k;
 					}
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
-							timeoutToks[1], streamId), 
+							timeoutToks[1], streamId.toString()), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
-					System.out.println("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "} for {" + timeoutToks[0] +", " + timeoutToks[1] + ", " + streamId + "}");
-					LOG.info("Adding new per edge timeout {" + timeoutToks[timeoutToks.length-1] + "}");
+					LOG.info("Adding new per edge timeout {"
+							+ timeoutToks[timeoutToks.length - 1]
+							+ "} with key {" + timeoutToks[0] + ", "
+							+ timeoutToks[1] + ", " + streamId.toString() + "}");
 				} catch (Exception e) {
 				}
 			}
