@@ -144,7 +144,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emit(ackingStreamId, vals);
-		LOG.debug("Acking the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
+		LOG.info("Sending an ack message for the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"}");
 	}
 
 	/**
@@ -210,18 +210,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
-			System.out.println("New TI which we want is {" + componentId_ + ", " + targetId + ", " + streamId +"}");
-			/*Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;*/
-			Long timeout = defaultPerEdgeTimeout_;
-			if(timeouts_.containsKey(ti)) {
-				System.out.println("Yes TimeoutIdentifier is contained in out store !!!");
-				timeout = timeouts_.get(ti);
-			} else {
-				System.out.println("Nope, TimeoutIdentifier does not exist, we are using default timeout !!!");
-			}
-			System.out.println("Found timeout { " + timeout + "} for identifier {" + componentId_ + ", " + targetId +", " + streamId +"}");
+			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
 			ackTracker_.get(timeout).put(tupleId, tuple);
-			System.out.println("Adding the tuple {" + tupleId + "} to ack Tracker !");
 		}
 		
 	}
@@ -260,7 +250,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				LOG.debug("Acking Tuple with key {" + tupleKey + "}");
+				LOG.info("Acking Tuple with key {" + tupleKey + "}");
 				rmap.remove(tupleKey);
 			}
 		}
@@ -296,22 +286,19 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// key1_t1|key2_t2 ...
 		// where key = sourceId+"_"+targetId+"_"+streamId;
 		String[] timeoutsMap = ((String)timeouts).split("[*"+TIMEOUTS_SEPARATOR+"*]+");
+		
 		for(int i = 0; i < timeoutsMap.length; ++i) {
+		
 			String[] timeoutToks = timeoutsMap[i].split("[*"+TIMEOUT_DELIMITER+"*]+");
-			System.out.println("Total timeoutMap {" + timeoutsMap[i] + "}");
-			for(int p = 0; p < timeoutToks.length; ++p) {
-				System.out.println("Tok {" + p + " is {" + timeoutToks[p] + "}");
-			}
+			
 			if(timeoutToks.length >= 4) {
 				try {
 					StringBuilder streamId = new StringBuilder();
 					//TODO: I did not realize that having '_' in a streamId would lead to all these issues,
 					//need to comeup with different separators for different stuff
 					int k = 2;
-					System.out.println("Now streamID is {" + streamId.toString() + "}");
 					while(k < timeoutToks.length-1) {
 						streamId.append(timeoutToks[k]).append("_");
-						System.out.println("In while, now streamID is {" + streamId.toString() + "}");
 						++k;
 					}
 					if(!streamId.toString().isEmpty()) {
@@ -321,13 +308,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 					timeouts_.put(new TimeoutIdentifier(timeoutToks[0],
 							timeoutToks[1], streamId.toString()), 
 							Long.parseLong(timeoutToks[timeoutToks.length-1]));
+					
 					LOG.info("Adding new per edge timeout {"
 							+ timeoutToks[timeoutToks.length - 1]
 							+ "} with key {" + timeoutToks[0] + ", "
 							+ timeoutToks[1] + ", " + streamId.toString() + "}");
 				} catch (Exception e) {
+				
 				}
 			}
+			
 		}
 	}
 	
