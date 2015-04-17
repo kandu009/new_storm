@@ -176,7 +176,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(now - lastRotate_ > timeout) {
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
-					LOG.debug("No failed Tuples in this Bucket !!!");
+					LOG.info("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
