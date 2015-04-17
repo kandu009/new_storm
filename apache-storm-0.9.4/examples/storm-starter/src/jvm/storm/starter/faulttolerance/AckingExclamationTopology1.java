@@ -222,7 +222,7 @@ public class AckingExclamationTopology1 {
 				// needed.
 				// As bolt2 and bolt3 are sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
-				//emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B4!")));
+				emitTuple(tuple, new Values(tuple.getString(MESSAGE_INDEX).concat("!B4!")));
 			}
 
 			@Override

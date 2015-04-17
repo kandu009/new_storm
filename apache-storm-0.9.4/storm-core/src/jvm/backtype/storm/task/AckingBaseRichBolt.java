@@ -117,7 +117,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// If the user decides to use Storm's default timeout mechanism, then
 		// ack the tuple in Storm way
 		if(enableStormDefaultTimeout_) {
-			collector_.ack(tuple);
+			// TODO: adding this only to check if failures are correctly identified 
+			if(!componentId_.equals("exclaim4")) {
+				collector_.ack(tuple);
+			}
 		}
 	}
 
