@@ -110,7 +110,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			return;
 		}
 		
-		sendAckMessage(tuple);
+		if(!componentId_.equals("exclaim4")) {
+			sendAckMessage(tuple);
+		} else {
+			System.out.println("Not sending custom acks as this was from bolt4!!!");
+		}
 
 		customExecute(tuple);
 
