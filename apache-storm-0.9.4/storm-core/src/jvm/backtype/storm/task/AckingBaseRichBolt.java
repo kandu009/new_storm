@@ -185,8 +185,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 	} // else we can just ignore acking/failing tuples 
                 }
 			}
-			lastRotate_ = now;
 		}
+		lastRotate_ = System.currentTimeMillis();
 	}
 
 	/**
@@ -211,7 +211,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
 			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
-			ackTracker_.get(timeout).put(tupleId, tuple);
+			RotatingMap<String, Tuple> rmap = ackTracker_.get(timeout);
+			System.out.println("Size of rmap before inserting is " + rmap.size());
+			rmap.put(tupleId, tuple);
+			ackTracker_.put(timeout, rmap);
+			System.out.println("Size of rmap after inserting is " + rmap.size());
 		}
 		
 	}
@@ -251,8 +255,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "}");
+				System.out.println("Size of rmap before inserting is " + rmap.size());
 				rmap.remove(tupleKey);
+				System.out.println("Size of rmap after inserting is " + rmap.size());
 			}
+			ackTracker_.put(at, rmap);
 		}
 	}
 	
