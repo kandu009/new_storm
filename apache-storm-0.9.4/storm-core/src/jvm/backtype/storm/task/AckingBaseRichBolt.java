@@ -120,6 +120,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			// TODO: adding this only to check if failures are correctly identified 
 			if(!componentId_.equals("exclaim4")) {
 				collector_.ack(tuple);
+			} else {
+				System.out.println("Not acking as this message was from bolt4!!!");
 			}
 		}
 	}
@@ -258,9 +260,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "}");
-				System.out.println("Size of rmap before inserting is " + rmap.size());
+				System.out.println("Size of rmap before acking is " + rmap.size());
 				rmap.remove(tupleKey);
-				System.out.println("Size of rmap after inserting is " + rmap.size());
+				System.out.println("Size of rmap after acking is " + rmap.size());
 			}
 			ackTracker_.put(at, rmap);
 		}
