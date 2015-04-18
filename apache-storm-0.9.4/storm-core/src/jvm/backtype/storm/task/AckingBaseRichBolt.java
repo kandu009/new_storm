@@ -77,6 +77,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		componentId_ = context.getThisComponentId();
 		defaultPerEdgeTimeout_ = context.getDefaultPerEdgeTimeout();
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
+		if(enableStormDefaultTimeout_) {
+			System.out.println("Yes, storm timeout mechanism is enabled.");
+		} else {
+			System.out.println("No, Storm timeout mechanism is not enabled.");
+		}
 		context_ = context;
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
@@ -180,9 +185,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void checkForTimedOutTuples() {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
+		System.out.println("Checking for timed out tuples !");
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
 			if(now - lastRotate_ > timeout) {
+				System.out.println("Yes, its time to rotate...");
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
 					LOG.info("No failed Tuples in this Bucket !!!");
@@ -192,7 +199,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
+                	else {
+                		System.out.println("Storm timeout is not enabled !");
+                	}
                 }
+			} else {
+				System.out.println("Last rotate wasn't too long !");
 			}
 		}
 		lastRotate_ = System.currentTimeMillis();
