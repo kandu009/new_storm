@@ -58,8 +58,9 @@ public class AckingExclamationTopology1 {
 
 		private static final long serialVersionUID = 1L;
 		
-		//TODO: check if this will start default acker ?
-		// If not should we use any specific type of OutputCollector?
+		// RK NOTE: this should start the default storm ack tracker since we are
+		// passing the tupleID as the message ID which will be used by storm as
+		// a key to track the tuples progress.
 		boolean _isDistributed;
 	    SpoutOutputCollector _collector;
 		Boolean enableStormsTimeoutMechanism_;
@@ -92,7 +93,7 @@ public class AckingExclamationTopology1 {
 	        vals.add(word);
 
 	        if(enableStormsTimeoutMechanism_) {
-	        	//TODO: RKNOTE 
+	        	//RKNOTE 
 	        	// since we want Storm to track the tuples and its acks here
 	        	// we need to give some messageId to emit (3rd argument).
 	        	
@@ -107,7 +108,7 @@ public class AckingExclamationTopology1 {
 	  
 	    @Override
 	    public void declareOutputFields(OutputFieldsDeclarer declarer) {
-			// TODO: spout_tupleId is needed to carry forward the rule that
+			// spout_tupleId is needed to carry forward the rule that
 			// tuple[0] should always have tupleId
 			// we should probably add a new abstraction for AckingSpouts???
 	        declarer.declareStream(SPOUT_SEND_STREAM, new Fields("spout_tupleId", "word"));
@@ -146,7 +147,7 @@ public class AckingExclamationTopology1 {
 			
 			@Override
 			public void customExecute(Tuple tuple) {
-				// TODO: I am assuming that getString(0) has the information
+				// RK NOTE: I am assuming that getString(0) has the information
 				// needed.
 				// As Spout is sending directly to this bolt and it provides no
 				// other fancy stuff other than the message
@@ -196,7 +197,7 @@ public class AckingExclamationTopology1 {
 			
 			@Override
 			public void customExecute(Tuple tuple) {
-				// TODO: I am assuming that getString(1) has the information
+				// RK NOTE: I am assuming that getString(1) has the information
 				// needed.
 				// As bolt1 is sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.
@@ -218,7 +219,7 @@ public class AckingExclamationTopology1 {
 						
 			@Override
 			public void customExecute(Tuple tuple) {
-				// TODO: I am assuming that getString(1) has the information
+				// RK NOTE: I am assuming that getString(1) has the information
 				// needed.
 				// As bolt2 and bolt3 are sending to this bolt and it provides tupleId in
 				// 0th index of tuple for per edge tracking.

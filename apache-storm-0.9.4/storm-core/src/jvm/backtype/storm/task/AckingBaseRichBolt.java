@@ -111,23 +111,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			return;
 		}
 		
-		if(!componentId_.equals("exclaim4")) {
-			sendAckMessage(tuple);
-		} else {
-			System.out.println("Not sending custom acks as this was from bolt4!!!");
-		}
+		sendAckMessage(tuple);
 
 		customExecute(tuple);
 
 		// If the user decides to use Storm's default timeout mechanism, then
 		// ack the tuple in Storm way
 		if(enableStormDefaultTimeout_) {
-			// TODO: adding this only to check if failures are correctly identified 
-			if(!componentId_.equals("exclaim4")) {
-				collector_.ack(tuple);
-			} else {
-				System.out.println("Not acking as this message was from bolt4!!!");
-			}
+			// RK NOTE: adding this only to check if failures are correctly
+			// identified by default storm topology 
+			collector_.ack(tuple);
 		}
 	}
 
@@ -143,7 +136,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				+ tuple.getSourceStreamId();
 		
 		// ack message will be like ack_tupleId_componentId_streamID
-		// TODO: RK Note, here we are assuming that tuple.getValue(0) will have our
+		// RK NOTE: here we are assuming that tuple.getValue(0) will have our
 		// ack message which has our tupleID
 		StringBuilder ackMsg = new StringBuilder().append(
 				ACK_MESSAGE_START_TOKEN).append(tuple.getValue(TUPLE_ID_INDEX).toString());
@@ -181,32 +174,30 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void checkForTimedOutTuples() {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
-		if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Checking for timed out tuples !");
+		LOG.debug("Checking for timed out tuples !");
 		
 		for(Long timeout : ackTracker_.keySet()) {
+			
 			long now = System.currentTimeMillis();
-			long lastRotate = ackTrackerVsLastRotate_.get(timeout);
-			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Timeout {" + timeout + "} now {" + now
-					+ "} difference now - lastRotate {" + (now - lastRotate)
-					+ "} lastRotate {" + lastRotate + "}");
-			if(now - lastRotate > timeout) {
-				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Yes, its time to rotate...");
+			long lastRotate_ = ackTrackerVsLastRotate_.get(timeout);
+			
+			if(now - lastRotate_ > timeout) {
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
-					if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) LOG.info("No failed Tuples in this Bucket !!!");
+					LOG.info("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
-                		if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) LOG.info("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
+                		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
                 }
                 ackTrackerVsLastRotate_.put(timeout, System.currentTimeMillis());
-				if (componentId_.equals("exclaim2") || componentId_.equals("exclaim3"))
-					System.out.println("Updating lastRotate to {"+ ackTrackerVsLastRotate_.get(timeout) + "}");
+                LOG.debug("Updating lastRotate of {" + timeout + "} to {"+ ackTrackerVsLastRotate_.get(timeout) + "}");
 			} else {
-				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Last rotate wasn't too long !");
+				LOG.debug("Last rotate wasn't too long for {" + timeout + "} !");
 			}
+			
 		}
 	}
 
@@ -220,7 +211,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
 			Values newVals = new Values(tupleId);
 			newVals.addAll(values);
-				// TODO RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
+			// RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, tuple, newVals);
@@ -233,10 +224,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
 			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(timeout);
-			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap before inserting is " + rmap.size());
 			rmap.put(tupleId, tuple);
 			ackTracker_.put(timeout, rmap);
-			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap after inserting is " + rmap.size());
 		}
 		
 	}
@@ -275,10 +264,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				LOG.info("Acking Tuple with key {" + tupleKey + "}");
-				if(componentId_.equals("exclaim3") || componentId_.equals("exclaim2")) System.out.println("Size of rmap before acking is " + rmap.size());
+				LOG.debug("Acking Tuple with key {" + tupleKey + "}");
 				rmap.remove(tupleKey);
-				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap after acking is " + rmap.size());
 			}
 			ackTracker_.put(at, rmap);
 		}
