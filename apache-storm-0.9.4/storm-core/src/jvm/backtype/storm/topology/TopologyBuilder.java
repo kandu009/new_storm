@@ -118,6 +118,7 @@ public class TopologyBuilder {
     private static String TIMEOUT_ID_SEPARATOR = "_";
     private static String ACKING_STREAM_DELIMITER = "|";
     private static String TIMEOUT_ID_DELIMITER = "|";
+    private static Boolean ACKING_STREAM_DIRECT_FLAG = Boolean.TRUE;
     
     private boolean isAckingComponent(GlobalStreamId gsi) {
     	String cid = gsi.get_componentId();
@@ -173,9 +174,10 @@ public class TopologyBuilder {
             			old  = addToInputs.get(srcGlobStrId.get_componentId());
             		}
             		GlobalStreamId gsid = new GlobalStreamId(boltId, ackingStreamId);
-            		old.put(gsid, Grouping.shuffle(new NullStruct()));
+            		old.put(gsid, Grouping.direct(new NullStruct()));
             		addToInputs.put(srcGlobStrId.get_componentId(), old);
-            		_commons.get(boltId).put_to_streams(ackingStreamId, new StreamInfo(new ArrayList<String>(), false));
+					_commons.get(boltId).put_to_streams(ackingStreamId,
+							new StreamInfo(new ArrayList<String>(), ACKING_STREAM_DIRECT_FLAG));
             		
             		ackingStreams.append(ackingStreamId).append(ACKING_STREAM_DELIMITER);
             		
