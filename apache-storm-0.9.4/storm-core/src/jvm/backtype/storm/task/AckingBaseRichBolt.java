@@ -50,7 +50,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private OutputCollector collector_;
 	private String componentId_ = new String();
 	private Random rand = new Random(Integer.MAX_VALUE);
-	private long lastRotate_ = System.currentTimeMillis();
 	private Long defaultPerEdgeTimeout_;
 	private Boolean enableStormDefaultTimeout_;
 	private TopologyContext context_;
@@ -64,6 +63,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	// TODO: not sure if the operations are all threadsafe, which is why I am using concurrent hashmap
 	// <timeout vs <tupleId, OriginalTuple>> 
 	private ConcurrentHashMap<Long, RotatingMap<String, Tuple>> ackTracker_ = new ConcurrentHashMap<Long, RotatingMap<String, Tuple>>();
+	// this is used to keep the last rotated time of each ack Tracker (with a corresponding timeout)
+	private ConcurrentHashMap<Long, Long> ackTrackerVsLastRotate_ = new ConcurrentHashMap<Long, Long>();
 	
 	// since this is just constructed once and read everywhere else, it should
 	// be fine even in case of multi threaded environment
@@ -181,14 +182,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
 		if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Checking for timed out tuples !");
-		boolean hasRotated = false;
 		
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
+			long lastRotate = ackTrackerVsLastRotate_.get(timeout);
 			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Timeout {" + timeout + "} now {" + now
-					+ "} difference now - lastRotate {" + (now - lastRotate_)
-					+ "} lastRotate {" + lastRotate_ + "}");
-			if(now - lastRotate_ > timeout) {
+					+ "} difference now - lastRotate {" + (now - lastRotate)
+					+ "} lastRotate {" + lastRotate + "}");
+			if(now - lastRotate > timeout) {
 				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Yes, its time to rotate...");
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
@@ -200,14 +201,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
                 }
-                hasRotated = true;
+                ackTrackerVsLastRotate_.put(timeout, System.currentTimeMillis());
+				if (componentId_.equals("exclaim2") || componentId_.equals("exclaim3"))
+					System.out.println("Updating lastRotate to {"+ ackTrackerVsLastRotate_.get(timeout) + "}");
 			} else {
 				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Last rotate wasn't too long !");
 			}
-		}
-		if(hasRotated ) {
-			lastRotate_ = System.currentTimeMillis();
-			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 		}
 	}
 
@@ -297,12 +296,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				RotatingMap<String, Tuple> rmap = new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE);
 				ackTracker_.put(timeouts_.get(i), rmap);
 				LOG.info("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
+				ackTrackerVsLastRotate_.put(timeouts_.get(i), System.currentTimeMillis());
+				LOG.info("Added an entry for timeout { " + timeouts_.get(i) + "} -> {" + ackTrackerVsLastRotate_.get(timeouts_.get(i)) + "} in LastRotate dataset");
 			}
 		}
 		
 		// we should also add a tracker for default per edge timeouts.
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
 		LOG.info("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
+		ackTrackerVsLastRotate_.put(defaultPerEdgeTimeout_, System.currentTimeMillis());
+		LOG.info("Added an entry for default timeout { " + ackTrackerVsLastRotate_.get(defaultPerEdgeTimeout_) + "} in LastRotate dataset");
 	}
 	
 	private void updateTimeouts(Object timeouts) {
