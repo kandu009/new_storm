@@ -180,34 +180,34 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void checkForTimedOutTuples() {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
-		System.out.println("Checking for timed out tuples !");
+		if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Checking for timed out tuples !");
 		boolean hasRotated = false;
 		
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
-			System.out.println("Timeout {" + timeout + "} now {" + now
+			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Timeout {" + timeout + "} now {" + now
 					+ "} difference now - lastRotate {" + (now - lastRotate_)
 					+ "} lastRotate {" + lastRotate_ + "}");
 			if(now - lastRotate_ > timeout) {
-				System.out.println("Yes, its time to rotate...");
+				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Yes, its time to rotate...");
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
-					LOG.info("No failed Tuples in this Bucket !!!");
+					if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) LOG.info("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
-                		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
+                		if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) LOG.info("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
                 }
                 hasRotated = true;
 			} else {
-				System.out.println("Last rotate wasn't too long !");
+				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Last rotate wasn't too long !");
 			}
 		}
 		if(hasRotated ) {
 			lastRotate_ = System.currentTimeMillis();
-    		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
+			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 		}
 	}
 
@@ -234,10 +234,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
 			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(timeout);
-			if(componentId_.equals("exclaim4")) System.out.println("Size of rmap before inserting is " + rmap.size());
+			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap before inserting is " + rmap.size());
 			rmap.put(tupleId, tuple);
 			ackTracker_.put(timeout, rmap);
-			if(componentId_.equals("exclaim4")) System.out.println("Size of rmap after inserting is " + rmap.size());
+			if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap after inserting is " + rmap.size());
 		}
 		
 	}
@@ -277,9 +277,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "}");
-				if(componentId_.equals("exclaim4")) System.out.println("Size of rmap before acking is " + rmap.size());
+				if(componentId_.equals("exclaim3") || componentId_.equals("exclaim2")) System.out.println("Size of rmap before acking is " + rmap.size());
 				rmap.remove(tupleKey);
-				if(componentId_.equals("exclaim4")) System.out.println("Size of rmap after acking is " + rmap.size());
+				if(componentId_.equals("exclaim2") || componentId_.equals("exclaim3")) System.out.println("Size of rmap after acking is " + rmap.size());
 			}
 			ackTracker_.put(at, rmap);
 		}
