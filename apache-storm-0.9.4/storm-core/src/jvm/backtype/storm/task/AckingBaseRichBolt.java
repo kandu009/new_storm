@@ -181,6 +181,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// TODO: can this be done in a separate thread which runs for every 
 		// min(perStreamTimeouts) seconds?
 		System.out.println("Checking for timed out tuples !");
+		boolean hasRotated = false;
+		
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
 			System.out.println("Timeout {" + timeout + "} now {" + now
@@ -198,11 +200,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
                 }
-                lastRotate_ = System.currentTimeMillis();
-        		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
+                hasRotated = true;
 			} else {
 				System.out.println("Last rotate wasn't too long !");
 			}
+		}
+		if(hasRotated ) {
+			lastRotate_ = System.currentTimeMillis();
+    		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 		}
 	}
 
