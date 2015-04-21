@@ -201,12 +201,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 		System.out.println("Storm timeout is not enabled !");
                 	}
                 }
+                lastRotate_ = System.currentTimeMillis();
+        		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 			} else {
 				System.out.println("Last rotate wasn't too long !");
 			}
 		}
-		lastRotate_ = System.currentTimeMillis();
-		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 	}
 
 	/**
