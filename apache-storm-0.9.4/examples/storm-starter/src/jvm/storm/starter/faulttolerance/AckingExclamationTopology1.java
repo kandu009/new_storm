@@ -250,11 +250,11 @@ public class AckingExclamationTopology1 {
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		builder.setSpout(SPOUT, spout, 1);
-		builder.setBolt(EXCLAIM_BOLT1, bolt1, 1).shuffleGrouping(SPOUT, SPOUT_SEND_STREAM);
-		builder.setBolt(EXCLAIM_BOLT2, bolt2, 1).shuffleGrouping(EXCLAIM_BOLT1, B1_B2_SEND_STREAM);
-		builder.setBolt(EXCLAIM_BOLT3, bolt3, 1).shuffleGrouping(EXCLAIM_BOLT1);
+		builder.setBolt(EXCLAIM_BOLT1, bolt1, 2).shuffleGrouping(SPOUT, SPOUT_SEND_STREAM);
+		builder.setBolt(EXCLAIM_BOLT2, bolt2, 4).shuffleGrouping(EXCLAIM_BOLT1, B1_B2_SEND_STREAM);
+		builder.setBolt(EXCLAIM_BOLT3, bolt3, 4).shuffleGrouping(EXCLAIM_BOLT1);
 		builder.setBolt(EXCLAIM_BOLT4, bolt4, 1).shuffleGrouping(EXCLAIM_BOLT3, B3_B4_SEND_STREAM).shuffleGrouping(EXCLAIM_BOLT2);
-		builder.setBolt(EXCLAIM_BOLT5, bolt5, 1).shuffleGrouping(EXCLAIM_BOLT4);
+		builder.setBolt(EXCLAIM_BOLT5, bolt5, 3).shuffleGrouping(EXCLAIM_BOLT4);
 		
 		builder.addStreamTimeout(EXCLAIM_BOLT1, EXCLAIM_BOLT2, B1_B2_SEND_STREAM, 10000L)
 				.addStreamTimeout(EXCLAIM_BOLT3, EXCLAIM_BOLT4, B3_B4_SEND_STREAM, 20000L);
