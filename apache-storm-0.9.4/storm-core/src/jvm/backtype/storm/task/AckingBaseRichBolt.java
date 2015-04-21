@@ -46,7 +46,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private static final int TUPLE_ID_INDEX = 0;
 	private static String TUPLE_ID_FIELD_NAME = "_tupleId";
 	
-	//TODO: are all of these thread safe? we should be able to support a parallelism > 1
 	private OutputCollector collector_;
 	private String componentId_ = new String();
 	private Random rand = new Random(Integer.MAX_VALUE);
@@ -60,7 +59,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	// Ack's
 	private HashSet<String> sendAckStream_ = new HashSet<String>();
 	
-	// TODO: not sure if the operations are all threadsafe, which is why I am using concurrent hashmap
 	// <timeout vs <tupleId, OriginalTuple>> 
 	private ConcurrentHashMap<Long, RotatingMap<String, Tuple>> ackTracker_ = new ConcurrentHashMap<Long, RotatingMap<String, Tuple>>();
 	// this is used to keep the last rotated time of each ack Tracker (with a corresponding timeout)

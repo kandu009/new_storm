@@ -27,11 +27,12 @@ public class AckingExclamationTopology1 {
 	 * mechanism is working fine. 
 	 * 
 	 * TODO: RK TRY LATER
-	 * 
+	 * Check
 	 * 1. for initial testing I have a parallelism of 1. once this works, we can
 	 * go and increase the parallelism and try to make sure if things are
 	 * working as expected
 	 * 
+	 * Check
 	 * 2. I am only trying shuffleGrouping for now, need to take use cases for
 	 * fieldsGrouping and all other grouping and test them as well.
 	 * 
