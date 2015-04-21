@@ -197,9 +197,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
                 		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time !!!");
                 		collector_.fail(failed.get(failedTuple));
                 	} // else we can just ignore acking/failing tuples 
-                	else {
-                		System.out.println("Storm timeout is not enabled !");
-                	}
                 }
                 lastRotate_ = System.currentTimeMillis();
         		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
@@ -232,10 +229,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
 			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(timeout);
-			System.out.println("Size of rmap before inserting is " + rmap.size());
+			if(componentId_.equals("exclaim4")) System.out.println("Size of rmap before inserting is " + rmap.size());
 			rmap.put(tupleId, tuple);
 			ackTracker_.put(timeout, rmap);
-			System.out.println("Size of rmap after inserting is " + rmap.size());
+			if(componentId_.equals("exclaim4")) System.out.println("Size of rmap after inserting is " + rmap.size());
 		}
 		
 	}
@@ -275,9 +272,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "}");
-				System.out.println("Size of rmap before acking is " + rmap.size());
+				if(componentId_.equals("exclaim4")) System.out.println("Size of rmap before acking is " + rmap.size());
 				rmap.remove(tupleKey);
-				System.out.println("Size of rmap after acking is " + rmap.size());
+				if(componentId_.equals("exclaim4")) System.out.println("Size of rmap after acking is " + rmap.size());
 			}
 			ackTracker_.put(at, rmap);
 		}
