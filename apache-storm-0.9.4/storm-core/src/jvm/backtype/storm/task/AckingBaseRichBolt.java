@@ -77,11 +77,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		componentId_ = context.getThisComponentId();
 		defaultPerEdgeTimeout_ = context.getDefaultPerEdgeTimeout();
 		enableStormDefaultTimeout_ = context.enableStormDefaultTimeoutMechanism();
-		if(enableStormDefaultTimeout_) {
-			System.out.println("Yes, storm timeout mechanism is enabled.");
-		} else {
-			System.out.println("No, Storm timeout mechanism is not enabled.");
-		}
 		context_ = context;
 		
 		updateTimeouts(conf.get(Configuration.timeout.name()));
@@ -188,6 +183,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		System.out.println("Checking for timed out tuples !");
 		for(Long timeout : ackTracker_.keySet()) {
 			long now = System.currentTimeMillis();
+			System.out.println("Timeout {" + timeout + "} now {" + now
+					+ "} difference now - lastRotate {" + (now - lastRotate_)
+					+ "} lastRotate {" + lastRotate_ + "}");
 			if(now - lastRotate_ > timeout) {
 				System.out.println("Yes, its time to rotate...");
 				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
@@ -208,6 +206,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			}
 		}
 		lastRotate_ = System.currentTimeMillis();
+		System.out.println("Updating lastRotate to {" + lastRotate_ + "}");
 	}
 
 	/**
