@@ -31,7 +31,7 @@ import backtype.storm.utils.Utils;
  *         have intentional delays.
  *         
  */
-public class AckingWordCountTopology {
+public class AckingWordCountTopology1 {
 	
 	private static final String SPOUT_SEND_STREAM = "spoutSendStream";
 	private static final String SPLITTER_AGGREGATOR_SEND_STREAM = "splitterAggregatorStream";
@@ -44,7 +44,7 @@ public class AckingWordCountTopology {
 	private static final String SUPERAGGREGATOR_BOLT = "superAggregatorBolt";
 	private static final String PRINTER_BOLT = "printerBolt";
 	
-	private static final Logger LOG = LoggerFactory.getLogger(AckingWordCountTopology.class);
+	private static final Logger LOG = LoggerFactory.getLogger(AckingWordCountTopology1.class);
 	
 	public static class AckingRandomSentenceSpout extends BaseRichSpout {
 		
@@ -243,21 +243,21 @@ public class AckingWordCountTopology {
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		
-		builder.setSpout(SENTENCE_SPOUT, spout, 1).setNumTasks(20);
+		builder.setSpout(SENTENCE_SPOUT, spout, 2).setNumTasks(20);
 		
-		builder.setBolt(SPLITER_BOLT, sentenceSplitBolt, 1)
+		builder.setBolt(SPLITER_BOLT, sentenceSplitBolt, 2)
 				.shuffleGrouping(SENTENCE_SPOUT, SPOUT_SEND_STREAM)
 				.setNumTasks(30);
 		
-		builder.setBolt(AGGREGATOR_BOLT, aggregatorBolt, 1)
+		builder.setBolt(AGGREGATOR_BOLT, aggregatorBolt, 6)
 				.shuffleGrouping(SPLITER_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM)
 				.setNumTasks(16);
 		
-		builder.setBolt(SUPERAGGREGATOR_BOLT, superAggregatorBolt, 1)
+		builder.setBolt(SUPERAGGREGATOR_BOLT, superAggregatorBolt, 6)
 				.shuffleGrouping(AGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM)
 				.setNumTasks(16);
 		
-		builder.setBolt(PRINTER_BOLT, printBolt, 1)
+		builder.setBolt(PRINTER_BOLT, printBolt, 3)
 				.shuffleGrouping(SUPERAGGREGATOR_BOLT, SUPERAGGREGATOR_PRINT_SEND_STREAM)
 				.setNumTasks(8);
 
