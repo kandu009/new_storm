@@ -46,7 +46,7 @@ public class AckingWordCountTopology {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(AckingWordCountTopology.class);
 	
-	public class AckingRandomSentenceSpout extends BaseRichSpout {
+	public static class AckingRandomSentenceSpout extends BaseRichSpout {
 		
 		private static final long serialVersionUID = 1L;
 
