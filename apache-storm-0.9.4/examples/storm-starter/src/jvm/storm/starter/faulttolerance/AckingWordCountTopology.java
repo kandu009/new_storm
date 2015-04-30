@@ -271,7 +271,11 @@ public class AckingWordCountTopology {
 
 		if (args != null && args.length > 0) {
 			conf.setNumWorkers(5);
-			StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
+			try {
+				StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
+			} catch(Exception e) {
+				e.printStackTrace();
+			}
 		}
 	
 	}
