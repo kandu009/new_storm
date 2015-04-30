@@ -243,23 +243,19 @@ public class AckingWordCountTopology {
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		
-		builder.setSpout(SENTENCE_SPOUT, spout, 1).setNumTasks(20);
+		builder.setSpout(SENTENCE_SPOUT, spout, 1);
 		
 		builder.setBolt(SPLITER_BOLT, sentenceSplitBolt, 1)
-				.shuffleGrouping(SENTENCE_SPOUT, SPOUT_SEND_STREAM)
-				.setNumTasks(30);
+				.shuffleGrouping(SENTENCE_SPOUT, SPOUT_SEND_STREAM);
 		
 		builder.setBolt(AGGREGATOR_BOLT, aggregatorBolt, 1)
-				.shuffleGrouping(SPLITER_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM)
-				.setNumTasks(16);
+				.shuffleGrouping(SPLITER_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM);
 		
 		builder.setBolt(SUPERAGGREGATOR_BOLT, superAggregatorBolt, 1)
-				.shuffleGrouping(AGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM)
-				.setNumTasks(16);
+				.shuffleGrouping(AGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM);
 		
 		builder.setBolt(PRINTER_BOLT, printBolt, 1)
-				.shuffleGrouping(SUPERAGGREGATOR_BOLT, SUPERAGGREGATOR_PRINT_SEND_STREAM)
-				.setNumTasks(8);
+				.shuffleGrouping(SUPERAGGREGATOR_BOLT, SUPERAGGREGATOR_PRINT_SEND_STREAM);
 
 		builder.addStreamTimeout(SPLITER_BOLT, AGGREGATOR_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM, 10000L)
 				.addStreamTimeout(AGGREGATOR_BOLT, SUPERAGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM, 20000L)
@@ -270,7 +266,7 @@ public class AckingWordCountTopology {
 		conf.setUseStormTimeoutMechanism(true);
 
 		if (args != null && args.length > 0) {
-			conf.setNumWorkers(5);
+			conf.setNumWorkers(3);
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf, builder.createTopology());
 			} catch(Exception e) {
