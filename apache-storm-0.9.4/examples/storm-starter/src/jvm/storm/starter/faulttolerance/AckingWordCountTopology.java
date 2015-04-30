@@ -258,7 +258,7 @@ public class AckingWordCountTopology {
 				.setNumTasks(16);
 		
 		builder.setBolt(PRINTER_BOLT, printBolt, 4)
-				.shuffleGrouping(SUPERAGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM)
+				.shuffleGrouping(SUPERAGGREGATOR_BOLT, SUPERAGGREGATOR_PRINT_SEND_STREAM)
 				.setNumTasks(8);
 
 		builder.addStreamTimeout(SPLITER_BOLT, AGGREGATOR_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM, 10000L)
