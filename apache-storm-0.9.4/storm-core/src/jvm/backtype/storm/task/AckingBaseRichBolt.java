@@ -213,9 +213,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, tuple, newVals);
-				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} with enableStormDefaultTimeout_ set to true");
+				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} with enableStormDefaultTimeout_ set to true from task {" + context_.getThisTaskId() + "}");
 			} else {
-				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} with enableStormDefaultTimeout_ set to false");
+				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
 				collector_.emit(streamId, newVals);
 			}
 
