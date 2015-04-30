@@ -243,21 +243,21 @@ public class AckingWordCountTopology {
 		
 		TopologyBuilder builder = new TopologyBuilder();
 		
-		builder.setSpout(SENTENCE_SPOUT, spout, 10).setNumTasks(20);
+		builder.setSpout(SENTENCE_SPOUT, spout, 3).setNumTasks(20);
 		
-		builder.setBolt(SPLITER_BOLT, sentenceSplitBolt, 15)
+		builder.setBolt(SPLITER_BOLT, sentenceSplitBolt, 4)
 				.shuffleGrouping(SENTENCE_SPOUT, SPOUT_SEND_STREAM)
 				.setNumTasks(30);
 		
-		builder.setBolt(AGGREGATOR_BOLT, aggregatorBolt, 4)
+		builder.setBolt(AGGREGATOR_BOLT, aggregatorBolt, 6)
 				.shuffleGrouping(SPLITER_BOLT, SPLITTER_AGGREGATOR_SEND_STREAM)
 				.setNumTasks(16);
 		
-		builder.setBolt(SUPERAGGREGATOR_BOLT, superAggregatorBolt, 8)
+		builder.setBolt(SUPERAGGREGATOR_BOLT, superAggregatorBolt, 7)
 				.shuffleGrouping(AGGREGATOR_BOLT, AGGREGATOR_SUPERAGGREGATOR_SEND_STREAM)
 				.setNumTasks(16);
 		
-		builder.setBolt(PRINTER_BOLT, printBolt, 4)
+		builder.setBolt(PRINTER_BOLT, printBolt, 7)
 				.shuffleGrouping(SUPERAGGREGATOR_BOLT, SUPERAGGREGATOR_PRINT_SEND_STREAM)
 				.setNumTasks(8);
 
