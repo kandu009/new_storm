@@ -438,25 +438,27 @@ public class TopologyBuilder {
 		ackFields.add(AckStreamFields.tupleId.name());
 		ackFields.add(AckStreamFields.ackMsg.name());
 		
-		HashSet<String> ackStreamSet = new HashSet<String>();
-        String[] ackStreamArray = ackStreams.split("[*"+ACK_STREAM_SEPARATOR+"*]+");
-		for(int i = 0; i < ackStreamArray.length; ++i) {
-			if(!ackStreamArray[i].trim().isEmpty()) {
-				ackStreamSet.add(ackStreamArray[i].trim());
+		if(ackStreams != null && !ackStreams.isEmpty()) {
+			HashSet<String> ackStreamSet = new HashSet<String>();
+	        String[] ackStreamArray = ackStreams.split("[*"+ACK_STREAM_SEPARATOR+"*]+");
+			for(int i = 0; i < ackStreamArray.length; ++i) {
+				if(!ackStreamArray[i].trim().isEmpty()) {
+					ackStreamSet.add(ackStreamArray[i].trim());
+				}
 			}
+			
+			// if the streams are ack streams, then add the fields to the stream 
+			HashMap<String, StreamInfo> tempStreams = new HashMap<String, StreamInfo>(streams);
+			for(String sid: tempStreams.keySet()) {
+	        	if(ackStreamSet.contains(sid)) {
+	        		StreamInfo oldValue = tempStreams.get(sid);
+	        		List<String> newFields = new ArrayList<String>(ackFields);
+	        		newFields.addAll(oldValue.get_output_fields());
+	        		StreamInfo newValue = new StreamInfo(newFields, oldValue.is_direct());
+	        		streams.put(sid, newValue);
+	        	}
+	        }
 		}
-		
-		// if the streams are ack streams, then add the fields to the stream 
-		HashMap<String, StreamInfo> tempStreams = new HashMap<String, StreamInfo>(streams);
-		for(String sid: tempStreams.keySet()) {
-        	if(ackStreamSet.contains(sid)) {
-        		StreamInfo oldValue = tempStreams.get(sid);
-        		List<String> newFields = new ArrayList<String>(ackFields);
-        		newFields.addAll(oldValue.get_output_fields());
-        		StreamInfo newValue = new StreamInfo(newFields, oldValue.is_direct());
-        		streams.put(sid, newValue);
-        	}
-        }
         
         ret.set_streams(streams);
         return ret;        
