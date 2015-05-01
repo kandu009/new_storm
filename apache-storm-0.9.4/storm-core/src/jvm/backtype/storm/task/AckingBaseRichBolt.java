@@ -213,7 +213,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, tuple, newVals);
-				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
+				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
 			} else {
 				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
 				collector_.emit(streamId, newVals);
@@ -262,7 +262,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				LOG.debug("Acking Tuple with key {" + tupleKey + "}");
+				LOG.info("Acking Tuple with key {" + tupleKey + "}");
 				rmap.remove(tupleKey);
 			}
 			ackTracker_.put(at, rmap);
