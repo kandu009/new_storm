@@ -18,6 +18,8 @@ public class AckingPrintBolt extends AbstractAckingBaseRichBolt {
 	private static final int MESSAGE_INDEX_1 = 1;
 	private static final int MESSAGE_INDEX_2 = 2;
 	
+	private static final Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
+	
 	private Random _rand;
 
 	@Override
