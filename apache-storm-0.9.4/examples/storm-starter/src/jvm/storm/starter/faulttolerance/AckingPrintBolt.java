@@ -3,6 +3,9 @@ package storm.starter.faulttolerance;
 import java.util.Map;
 import java.util.Random;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
