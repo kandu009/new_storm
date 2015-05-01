@@ -262,7 +262,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				LOG.info("Acking Tuple with key {" + tupleKey + "}");
+				LOG.info("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
 				rmap.remove(tupleKey);
 			}
 			ackTracker_.put(at, rmap);
