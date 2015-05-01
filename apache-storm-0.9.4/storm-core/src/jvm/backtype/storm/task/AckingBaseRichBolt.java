@@ -1,6 +1,7 @@
 package backtype.storm.task;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -60,7 +61,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private HashSet<String> sendAckStream_ = new HashSet<String>();
 	
 	// <timeout vs <tupleId, OriginalTuple>> 
-	private ConcurrentHashMap<Long, RotatingMap<String, Tuple>> ackTracker_ = new ConcurrentHashMap<Long, RotatingMap<String, Tuple>>();
+	private ConcurrentHashMap<Long, RotatingMap<String, List<Tuple>>> ackTracker_ = new ConcurrentHashMap<Long, RotatingMap<String, List<Tuple>>>();
 	// this is used to keep the last rotated time of each ack Tracker (with a corresponding timeout)
 	private ConcurrentHashMap<Long, Long> ackTrackerVsLastRotate_ = new ConcurrentHashMap<Long, Long>();
 	
@@ -180,14 +181,16 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			long lastRotate_ = ackTrackerVsLastRotate_.get(timeout);
 			
 			if(now - lastRotate_ > timeout) {
-				Map<String, Tuple> failed = ackTracker_.get(timeout).rotate();
+				Map<String, List<Tuple>> failed = ackTracker_.get(timeout).rotate();
 				if(failed.isEmpty()) {
 					LOG.info("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
                 	if(enableStormDefaultTimeout_) {
                 		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time on taskID {" + context_.getThisTaskId() + "} !!!");
-                		collector_.fail(failed.get(failedTuple));
+                		for(Tuple t : failed.get(failedTuple)) {
+                			collector_.fail(t);
+                		}
                 	} // else we can just ignore acking/failing tuples 
                 }
                 ackTrackerVsLastRotate_.put(timeout, System.currentTimeMillis());
@@ -204,7 +207,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	 */
 	public abstract void customExecute(Tuple tuple);
 	
-	public void emitTupleOnStream(Tuple tuple, Values values, String streamId) {
+	public void emitTupleOnStream(List<Tuple> anchors, Values values, String streamId) {
 		for(String targetId : getTargetsForStream(streamId)) {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
 			Values newVals = new Values(tupleId);
@@ -212,7 +215,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			// RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
-				collector_.emit(streamId, tuple, newVals);
+				collector_.emit(streamId, anchors, newVals);
 				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
 			} else {
 				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
@@ -221,17 +224,25 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 			TimeoutIdentifier ti = new TimeoutIdentifier(componentId_, targetId, streamId);
 			Long timeout = timeouts_.containsKey(ti) ? timeouts_.get(ti) : defaultPerEdgeTimeout_;
-			RotatingMap<String, Tuple> rmap = ackTracker_.get(timeout);
-			rmap.put(tupleId, tuple);
+			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(timeout);
+			rmap.put(tupleId, anchors);
 			ackTracker_.put(timeout, rmap);
 		}
 		
 	}
 	
-	public void emitTuple(Tuple tuple, Values values) {
-		emitTupleOnStream(tuple, values, Utils.DEFAULT_STREAM_ID);
+	public void emitTuple(Tuple anchor, Values values) {
+		emitTupleOnStream(new ArrayList<Tuple>(Arrays.asList(anchor)), values, Utils.DEFAULT_STREAM_ID);
 	}
-
+	
+	public void emitTupleOnStream(Tuple anchor, Values values, String streamId) {
+		emitTupleOnStream(new ArrayList<Tuple>(Arrays.asList(anchor)), values, streamId);
+	}
+	
+	public void emitTuple(List<Tuple> anchors, Values values) {
+		emitTupleOnStream(anchors, values, Utils.DEFAULT_STREAM_ID);
+	}
+	
 	private HashSet<String> getTargetsForStream(String streamId) {
 		Map<String, Map<String, Grouping>> targets = context_.getThisTargets();
 		HashSet<String> ret = new HashSet<String>();
@@ -260,7 +271,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	private void findAndAckTuple(String tupleKey) {
 		for(Long at : ackTracker_.keySet()) {
-			RotatingMap<String, Tuple> rmap = ackTracker_.get(at);
+			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
 				rmap.remove(tupleKey);
@@ -278,7 +289,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private void createAckTrackersPerTimeout() {
 		for(TimeoutIdentifier i : timeouts_.keySet()) {
 			if(!ackTracker_.containsKey(timeouts_.get(i))) {
-				RotatingMap<String, Tuple> rmap = new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE);
+				RotatingMap<String, List<Tuple>> rmap = new RotatingMap<String, List<Tuple>>(ROTATING_MAP_BUCKET_SIZE);
 				ackTracker_.put(timeouts_.get(i), rmap);
 				LOG.info("Created an Ack Tracker with timeout {" + timeouts_.get(i) + "}");
 				ackTrackerVsLastRotate_.put(timeouts_.get(i), System.currentTimeMillis());
@@ -287,7 +298,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		}
 		
 		// we should also add a tracker for default per edge timeouts.
-		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, Tuple>(ROTATING_MAP_BUCKET_SIZE));
+		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, List<Tuple>>(ROTATING_MAP_BUCKET_SIZE));
 		LOG.info("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 		ackTrackerVsLastRotate_.put(defaultPerEdgeTimeout_, System.currentTimeMillis());
 		LOG.info("Added an entry for default timeout { " + ackTrackerVsLastRotate_.get(defaultPerEdgeTimeout_) + "} in LastRotate dataset");
