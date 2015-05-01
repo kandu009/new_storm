@@ -63,7 +63,7 @@ public class AckingWordCountTopology2 {
 			.addStreamTimeout(CENTRALAGGREGATOR_BOLT, PRINTER_BOLT, CENTRALAGGREGATOR_PRINT_STREAM, 10000L);	//4200
 
 		Config conf = new Config();
-		conf.setDefaultPerEdgeTimeout(5000L);
+		conf.setDefaultPerEdgeTimeout(100L);
 		conf.setUseStormTimeoutMechanism(true);
 
 		if (args != null && args.length > 0) {

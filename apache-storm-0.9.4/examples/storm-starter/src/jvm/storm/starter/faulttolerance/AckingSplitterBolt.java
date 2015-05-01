@@ -28,6 +28,7 @@ public class AckingSplitterBolt extends AbstractAckingBaseRichBolt {
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
+		_rand = new Random();
 	}
 
 	@Override

@@ -108,6 +108,7 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 		delayVsLastPushTime_.put(Delays.high.delay_, System.currentTimeMillis());
 		delayVsLastPushTime_.put(Delays.moderate.delay_, System.currentTimeMillis());
 		delayVsLastPushTime_.put(Delays.low.delay_, System.currentTimeMillis());
+		rand_ = new Random();
 	}
 
 	@Override

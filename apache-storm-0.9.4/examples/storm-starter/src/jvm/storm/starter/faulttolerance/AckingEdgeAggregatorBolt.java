@@ -103,12 +103,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
-		delayVsLastPushTime_.put(Delays.high.delay_,
-				System.currentTimeMillis());
-		delayVsLastPushTime_.put(Delays.moderate.delay_,
-				System.currentTimeMillis());
-		delayVsLastPushTime_.put(Delays.low.delay_,
-				System.currentTimeMillis());
+		delayVsLastPushTime_.put(Delays.high.delay_, System.currentTimeMillis());
+		delayVsLastPushTime_.put(Delays.moderate.delay_, System.currentTimeMillis());
+		delayVsLastPushTime_.put(Delays.low.delay_, System.currentTimeMillis());
+		_rand = new Random();
 	}
 
 	@Override
