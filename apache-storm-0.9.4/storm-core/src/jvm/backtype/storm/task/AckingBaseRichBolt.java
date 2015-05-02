@@ -146,7 +146,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emitDirect(tuple.getSourceTask(), ackingStreamId, vals);
-		LOG.info("Sending an ack message for the tuple with ID {" + tupleId +"} on stream {" + ackingStreamId +"} to taskID {" + tuple.getSourceTask() +"}");
+		LOG.info("Sending an ack message for the tuple with ID {" + tuple.getValue(TUPLE_ID_INDEX).toString() +
+				"} on stream {" + ackingStreamId +"} to taskID {" + tuple.getSourceTask() +"}");
 	}
 
 	/**
