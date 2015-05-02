@@ -110,7 +110,6 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 						sb.append(a.getString(1)).append(",");
 					}
 					LOG.info("Emiting tuple with word {" + word
-							+ "} on taskId {" + getThisTaskId()
 							+ "} and anchors {" + sb.toString() + "}");
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
 					updatePushTime = true;
@@ -165,7 +164,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		}
 		LOG.info("Before pushing values to delayVsCounts_ for delay {" + delay
 				+ "}, and value {" + sb1.toString() + "} and word {" + word
-				+ "} on taskId {" + getThisTaskId() + "}!");
+				+ "}!");
 				
 		Integer count = 1;
 		if(curMap.contains(word)) {
@@ -180,7 +179,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		}
 		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay
 				+ "}, and value {" + sb.toString() + "} and word {" + word
-				+ "} on taskId {" + getThisTaskId() + "}!");
+				+ "}!");
 		
 		pushUpdates();
 	}

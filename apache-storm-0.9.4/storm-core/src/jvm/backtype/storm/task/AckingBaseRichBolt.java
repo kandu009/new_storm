@@ -374,8 +374,4 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		}
 	}
     
-	public int getThisTaskId() {
-		context_.getThisTaskId();
-	}
-	
 }
