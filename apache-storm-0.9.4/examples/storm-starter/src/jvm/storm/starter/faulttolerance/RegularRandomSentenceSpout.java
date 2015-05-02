@@ -119,7 +119,7 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 
 	@Override
 	public void fail(Object msgId) {
-		LOG.severe("Tuple with message ID {" + msgId.toString() + "} has failed");
+		LOG.error("Tuple with message ID {" + msgId.toString() + "} has failed");
 		if(tupleTracker_.get(msgId.toString()) != null) {
 			emitTuple(tupleTracker_.get(msgId.toString()));
 			tupleTracker_.remove(msgId.toString());
