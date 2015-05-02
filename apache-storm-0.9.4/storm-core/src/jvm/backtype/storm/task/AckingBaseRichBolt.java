@@ -214,7 +214,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		for(String targetId : getTargetsForStream(streamId)) {
 			sb.append(targetId).append(",");
 		}
-		System.out.println("Target IDs for this tuple are : " + sb.toString());
+		LOG.info("Target IDs for this stream {" + streamId +"} are : " + sb.toString());
 		
 		for(String targetId : getTargetsForStream(streamId)) {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
@@ -372,6 +372,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 				LOG.info("Adding Ack Stream {" + ackStreamArray[i].trim() +"}");
 			}
 		}
+	}
+	
+	public int getThisTaskId() {
+		return context_.getThisTaskId();
 	}
     
 }

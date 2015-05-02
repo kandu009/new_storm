@@ -14,7 +14,10 @@ public abstract class AbstractAckingBaseRichBolt extends AckingBaseRichBolt {
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
 			OutputCollector collector) {
-		
+	}
+
+	public int getThisTaskId() {
+		return super.getThisTaskId();
 	}
 	
 }

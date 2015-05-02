@@ -64,12 +64,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	// delay vs Counts of words and its Tuples which are used to later
 	// fail if ack is not received by PerEdgeAcking Storm
 	// delay vs <word, count>
-	private ConcurrentHashMap<Long, ConcurrentHashMap<String, Integer>> delayVsCounts_ = 
-			new ConcurrentHashMap<Long, ConcurrentHashMap<String, Integer>>();
+	private HashMap<Long, HashMap<String, Integer>> delayVsCounts_ = new HashMap<Long, HashMap<String, Integer>>();
 
 	// word vs List<anchors>
-	private ConcurrentHashMap<String, List<Tuple>> wordVsAnchors_ = 
-			new ConcurrentHashMap<String, List<Tuple>>();
+	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
 
 	public AckingEdgeAggregatorBolt(String stream) {
 		outputStream_ = stream;
@@ -98,9 +96,9 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			// push updates only if last push time is more than delay
 			boolean updatePushTime = false;
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
-				ConcurrentHashMap<String, Integer> counts = delayVsCounts_.get(delay);
+				HashMap<String, Integer> counts = delayVsCounts_.get(delay);
 				if(counts == null || counts.isEmpty()) {
-					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing !");
+					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing ! taskID {" + getThisTaskId() +"}");
 					continue;
 				}
 				for (String word : counts.keySet()) {
@@ -110,13 +108,13 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 						sb.append(a.getString(1)).append(",");
 					}
 					LOG.info("Emiting tuple with word {" + word
-							+ "} and anchors {" + sb.toString() + "}");
+							+ "} and anchors {" + sb.toString() + "} taskId {" + getThisTaskId() + "} on stream {" + outputStream_ +"}");
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
 					updatePushTime = true;
 				}
 				// reset the counts after pushing
 				if(updatePushTime) {
-					delayVsCounts_.put(delay, new ConcurrentHashMap<String, Integer>());
+					delayVsCounts_.put(delay, new HashMap<String, Integer>());
 					delayVsLastPushTime_.put(delay, now);
 				}
 			}
@@ -145,7 +143,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		// these anchors will later be used to fail the upstream if an
 		// ack for this message is not received within timeout
 		List<Tuple> l = new ArrayList<Tuple>(Arrays.asList(tuple)); 
-		if(wordVsAnchors_.contains(word)) {
+		if(wordVsAnchors_.containsKey(word)) {
 			l.addAll(wordVsAnchors_.get(word));
 		}
 		wordVsAnchors_.put(word, l);
@@ -155,8 +153,8 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		// counts when the push was >= delay time, as done is
 		// pushUpdates()
 		Long delay = getDelayFor(word);
-		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
-				new ConcurrentHashMap<String, Integer>() : delayVsCounts_.get(delay);
+		HashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
+				new HashMap<String, Integer>() : delayVsCounts_.get(delay);
 		
 		StringBuilder sb1 = new StringBuilder();
 		for(String w: curMap.keySet()) {
@@ -164,10 +162,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		}
 		LOG.info("Before pushing values to delayVsCounts_ for delay {" + delay
 				+ "}, and value {" + sb1.toString() + "} and word {" + word
-				+ "}!");
+				+ "} taskId {" + getThisTaskId() + "}!");
 				
 		Integer count = 1;
-		if(curMap.contains(word)) {
+		if(curMap.containsKey(word)) {
 			count += curMap.get(word);
 		}
 		curMap.put(word, count);
@@ -179,7 +177,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		}
 		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay
 				+ "}, and value {" + sb.toString() + "} and word {" + word
-				+ "}!");
+				+ "} taskId {" + getThisTaskId() +"} !");
 		
 		pushUpdates();
 	}
@@ -189,5 +187,9 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			AckingOutputFieldsDeclarer declarer) {
 		declarer.declareStream(outputStream_, new Fields("word", "count"));
 		declarer.declare(new Fields("word", "count"));
+	}
+	
+	public int getThisTaskId() {
+		return super.getThisTaskId();
 	}
 }
