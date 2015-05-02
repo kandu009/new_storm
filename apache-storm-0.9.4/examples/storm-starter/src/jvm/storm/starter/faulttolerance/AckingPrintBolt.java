@@ -1,5 +1,6 @@
 package storm.starter.faulttolerance;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
@@ -22,6 +23,7 @@ public class AckingPrintBolt extends AbstractAckingBaseRichBolt {
 	private static final int MESSAGE_INDEX_2 = 2;
 	
 	private static final Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
+	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
 	
 	private Random _rand;
 
@@ -42,6 +44,12 @@ public class AckingPrintBolt extends AbstractAckingBaseRichBolt {
 		// which is a simple string in this case.
 		String word = tuple.getString(MESSAGE_INDEX_1);
 		Integer count = tuple.getInteger(MESSAGE_INDEX_2);
+		
+		if(counts_.containsKey(word)) {
+			count += counts_.get(word);
+		}
+		counts_.put(word, count);
+		
 		LOG.info("Super Count for characer {" + word + "} -> count {" + count + "}");
 	}
 

@@ -1,11 +1,13 @@
 package storm.starter.faulttolerance;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import sun.rmi.transport.proxy.CGIHandler;
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -25,6 +27,7 @@ public class RegularPrintBolt extends BaseRichBolt {
 	
 	private static final Logger LOG = LoggerFactory.getLogger(RegularPrintBolt.class);
 	
+	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
 	private Random _rand;
 
 	@Override
@@ -44,6 +47,12 @@ public class RegularPrintBolt extends BaseRichBolt {
 		// which is a simple string in this case.
 		String word = tuple.getString(MESSAGE_INDEX_1);
 		Integer count = tuple.getInteger(MESSAGE_INDEX_2);
+		
+		if(counts_.containsKey(word)) {
+			count += counts_.get(word);
+		}
+		counts_.put(word, count);
+		
 		LOG.info("Super Count for characer {" + word + "} -> count {" + count + "}");
 		
 	}
