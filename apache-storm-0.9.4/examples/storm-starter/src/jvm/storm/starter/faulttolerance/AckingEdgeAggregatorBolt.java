@@ -22,8 +22,6 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-import com.sun.istack.internal.logging.Logger;
-
 public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
