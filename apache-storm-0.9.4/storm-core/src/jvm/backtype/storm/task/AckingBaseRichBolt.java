@@ -210,12 +210,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	
 	public void emitTupleOnStream(List<Tuple> anchors, Values values, String streamId) {
 		
-		StringBuilder sb = new StringBuilder();
-		for(String targetId : getTargetsForStream(streamId)) {
-			sb.append(targetId).append(",");
-		}
-		LOG.info("Target IDs for this stream {" + streamId +"} are : " + sb.toString());
-		
 		for(String targetId : getTargetsForStream(streamId)) {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
 			Values newVals = new Values(tupleId);
