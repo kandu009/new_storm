@@ -94,25 +94,24 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		long now = System.currentTimeMillis();
 		for (Long delay : delayVsLastPushTime_.keySet()) {
 			// push updates only if last push time is more than delay
+			boolean updatePushTime = false;
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
 				ConcurrentHashMap<String, Integer> counts = delayVsCounts_.get(delay);
 				if(counts == null || counts.isEmpty()) {
 					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing !");
 					continue;
 				}
+				updatePushTime = true;
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
 				}
 				// reset the counts after pushing
-				delayVsCounts_.put(delay, new ConcurrentHashMap<String, Integer>());
+				if(updatePushTime) {
+					delayVsCounts_.put(delay, new ConcurrentHashMap<String, Integer>());
+					delayVsLastPushTime_.put(delay, now);
+				}
 			}
-		}
-		
-		// reset the lastPush times
-		Set<Long> delays = delayVsLastPushTime_.keySet();
-		for(Long delay: delays) {
-			delayVsLastPushTime_.put(delay, now);
 		}
 	}
 
@@ -161,7 +160,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		for(String w: curMap.keySet()) {
 			sb.append(w).append(":").append(curMap.get(w)).append(",");
 		}
-		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay +"}, and value {" + sb.toString() +"} !");
+		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay +"}, and value {" + sb.toString() +"} and word {" + word +"} !");
 		
 		pushUpdates();
 	}
