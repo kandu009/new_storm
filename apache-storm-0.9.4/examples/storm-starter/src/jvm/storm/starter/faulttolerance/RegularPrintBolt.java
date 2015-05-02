@@ -22,8 +22,8 @@ public class RegularPrintBolt extends BaseRichBolt {
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX_1 = 1;
-	private static final int MESSAGE_INDEX_2 = 2;
+	private static final int MESSAGE_INDEX_1 = 0;
+	private static final int MESSAGE_INDEX_2 = 1;
 	
 	private static final Logger LOG = LoggerFactory.getLogger(RegularPrintBolt.class);
 	

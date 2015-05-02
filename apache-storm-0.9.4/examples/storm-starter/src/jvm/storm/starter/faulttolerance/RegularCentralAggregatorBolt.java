@@ -45,8 +45,8 @@ public class RegularCentralAggregatorBolt extends BaseRichBolt {
 	
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX_1 = 1;
-	private static final int MESSAGE_INDEX_2 = 2;
+	private static final int MESSAGE_INDEX_1 = 0;
+	private static final int MESSAGE_INDEX_2 = 1;
 	
 	// output stream on which tuples will be emitted from this bolt
 	private String outputStream_;

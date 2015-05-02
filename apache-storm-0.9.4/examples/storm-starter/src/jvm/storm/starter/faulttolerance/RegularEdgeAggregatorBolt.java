@@ -43,7 +43,7 @@ public class RegularEdgeAggregatorBolt extends BaseRichBolt {
 	
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX = 1;
+	private static final int MESSAGE_INDEX = 0;
 	
 	// output stream on which tuples will be emitted from this bolt
 	private String outputStream_;
