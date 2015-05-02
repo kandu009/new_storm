@@ -55,7 +55,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	private static final int MESSAGE_INDEX = 1;
 	
 	// output stream on which tuples will be emitted from this bolt
-	private static final String outputStream_ = "edgeAggregatorCentralaggregatorStream";
+	private String outputStream_;
 	private Random _rand;
 	
 	// delay vs lastEmitTime for this delay bucket
@@ -69,6 +69,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	// word vs List<anchors>
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
 
+	public AckingEdgeAggregatorBolt(String stream) {
+		outputStream_ = stream;
+	}
+	
 	public Long getDelayFor(String word) {
 		
 		if(word == null ||  word.isEmpty()) {

@@ -38,7 +38,7 @@ public class AckingWordCountTopology2 {
 
 		AckingRandomSentenceSpout spout = new AckingRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
 		AckingSplitterBolt splitterBolt = new AckingSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
-		AckingEdgeAggregatorBolt edAggregatorBolt = new AckingEdgeAggregatorBolt();
+		AckingEdgeAggregatorBolt edAggregatorBolt = new AckingEdgeAggregatorBolt(EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
 		AckingCentralAggregatorBolt centralAggregatorBolt = new AckingCentralAggregatorBolt(CENTRALAGGREGATOR_PRINT_STREAM);
 		AckingPrintBolt printBolt = new AckingPrintBolt();
 		
