@@ -7,13 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
 
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
@@ -34,8 +27,6 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			new ArrayList<Character>(Arrays.asList('e', 'f')));
 	private static final HashSet<Character> lessFrequent_ = new HashSet<Character>(
 			new ArrayList<Character>(Arrays.asList('g')));
-	
-	private static final Logger LOG = LoggerFactory.getLogger(AckingEdgeAggregatorBolt.class);
 	
 	public enum Delays {
 
@@ -98,17 +89,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
 				HashMap<String, Integer> counts = delayVsCounts_.get(delay);
 				if(counts == null || counts.isEmpty()) {
-					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing ! taskID {" + getThisTaskId() +"}");
 					continue;
 				}
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
-					StringBuilder sb = new StringBuilder();
-					for(Tuple a :anchors) {
-						sb.append(a.getString(1)).append(",");
-					}
-					LOG.info("Emiting tuple with word {" + word
-							+ "} and anchors {" + sb.toString() + "} taskId {" + getThisTaskId() + "} on stream {" + outputStream_ +"}");
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
 					updatePushTime = true;
 				}
@@ -156,28 +140,12 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		HashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
 				new HashMap<String, Integer>() : delayVsCounts_.get(delay);
 		
-		StringBuilder sb1 = new StringBuilder();
-		for(String w: curMap.keySet()) {
-			sb1.append(w).append(":").append(curMap.get(w)).append(",");
-		}
-		LOG.info("Before pushing values to delayVsCounts_ for delay {" + delay
-				+ "}, and value {" + sb1.toString() + "} and word {" + word
-				+ "} taskId {" + getThisTaskId() + "}!");
-				
 		Integer count = 1;
 		if(curMap.containsKey(word)) {
 			count += curMap.get(word);
 		}
 		curMap.put(word, count);
 		delayVsCounts_.put(delay, curMap);
-		
-		StringBuilder sb = new StringBuilder();
-		for(String w: curMap.keySet()) {
-			sb.append(w).append(":").append(curMap.get(w)).append(",");
-		}
-		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay
-				+ "}, and value {" + sb.toString() + "} and word {" + word
-				+ "} taskId {" + getThisTaskId() +"} !");
 		
 		pushUpdates();
 	}

@@ -55,14 +55,14 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 	// delay vs lastEmitTime for this delay bucket
 	private HashMap<Long, Long> delayVsLastPushTime_ = new HashMap<Long, Long>();
 
-	// delay vs Counts of words and its Tuples which are used to later
+	// delay vs Counts of characters and its Tuples which are used to later
 	// fail if ack is not received by PerEdgeAcking Storm
-	// delay vs <word, count>
+	// delay vs <character, count>
 	private HashMap<Long, HashMap<String, Integer>> delayVsCounts_ = 
 			new HashMap<Long, HashMap<String, Integer>>();
 
 	// character vs List<anchors>
-	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
+	private HashMap<String, List<Tuple>> charVsAnchors_ = new HashMap<String, List<Tuple>>();
 
 	public AckingCentralAggregatorBolt(String stream) {
 		outputStream_ = stream;
@@ -87,7 +87,6 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 	public void pushUpdates() {
 		long now = System.currentTimeMillis();
 		for (Long delay : delayVsLastPushTime_.keySet()) {
-			
 			boolean updatePushTime = false;
 			// push updates only if last push time is more than delay
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
@@ -95,9 +94,9 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 				if(counts == null || counts.isEmpty()) {
 					continue;
 				}
-				for (String word : counts.keySet()) {
-					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
-					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
+				for (String character : counts.keySet()) {
+					List<Tuple> anchors = charVsAnchors_.containsKey(character) ? charVsAnchors_.remove(character) : new ArrayList<Tuple>();
+					emitTupleOnStream(anchors, new Values(character, counts.get(character)), outputStream_);
 					updatePushTime = true;
 				}
 				// reset the counts after pushing
@@ -106,12 +105,6 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 					delayVsLastPushTime_.put(delay, now);
 				}
 			}
-		}
-		
-		// reset the lastPush times
-		Set<Long> delays = delayVsLastPushTime_.keySet();
-		for(Long delay: delays) {
-			delayVsLastPushTime_.put(delay, now);
 		}
 	}
 
@@ -129,29 +122,29 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 
 		Utils.sleep(Math.abs(rand_.nextInt() % 200));
 		
-		String word = tuple.getString(MESSAGE_INDEX_1);
+		String character = new StringBuilder().append(tuple.getString(MESSAGE_INDEX_1).charAt(0)).toString(); 
 		
-		// we need to populate the anchors list belonging to this word
+		// we need to populate the anchors list belonging to this character
 		// these anchors will later be used to fail the upstream if an
 		// ack for this message is not received within timeout
 		List<Tuple> l = new ArrayList<Tuple>(Arrays.asList(tuple)); 
-		if(wordVsAnchors_.containsKey(word)) {
-			l.addAll(wordVsAnchors_.get(word));
+		if(charVsAnchors_.containsKey(character)) {
+			l.addAll(charVsAnchors_.get(character));
 		}
-		wordVsAnchors_.put(word, l);
+		charVsAnchors_.put(character, l);
 		
-		// updating the count of the word received in the
+		// updating the count of the character received in the
 		// delayVsCounts_ structure. this is used to push out the
 		// counts when the push was >= delay time, as done is
 		// pushUpdates()
-		Long delay = getDelayFor(word);
+		Long delay = getDelayFor(character);
 		HashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
 				new HashMap<String, Integer>() : delayVsCounts_.get(delay);
 		Integer count = tuple.getInteger(MESSAGE_INDEX_2);
-		if(curMap.containsKey(word)) {
-			count += curMap.get(word);
+		if(curMap.containsKey(character)) {
+			count += curMap.get(character);
 		}
-		curMap.put(word, count);
+		curMap.put(character, count);
 		delayVsCounts_.put(delay, curMap);
 		
 		pushUpdates();
