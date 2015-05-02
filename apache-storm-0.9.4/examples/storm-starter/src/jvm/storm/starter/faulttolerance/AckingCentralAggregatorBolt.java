@@ -70,6 +70,11 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 	}
 	
 	public Long getDelayFor(String word) {
+		
+		if(word == null || word.isEmpty()) {
+			return Delays.high.delay_;
+		}
+		
 		char firstChar = word.charAt(0);
 		if (frequent_.contains(firstChar)) {
 			return Delays.low.delay_;
@@ -86,6 +91,9 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 			// push updates only if last push time is more than delay
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
 				ConcurrentHashMap<String, Integer> counts = delayVsCounts_.get(delay);
+				if(counts == null || counts.isEmpty()) {
+					continue;
+				}
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
@@ -132,7 +140,8 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 		// counts when the push was >= delay time, as done is
 		// pushUpdates()
 		Long delay = getDelayFor(word);
-		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay);
+		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
+				new ConcurrentHashMap<String, Integer>() : delayVsCounts_.get(delay);
 		Integer count = tuple.getInteger(MESSAGE_INDEX_2);
 		if(curMap.contains(word)) {
 			count += curMap.get(word);

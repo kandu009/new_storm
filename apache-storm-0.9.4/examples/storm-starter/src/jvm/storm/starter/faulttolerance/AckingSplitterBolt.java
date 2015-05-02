@@ -42,9 +42,13 @@ public class AckingSplitterBolt extends AbstractAckingBaseRichBolt {
 		// As Spout is sending directly to this bolt and it provides no
 		// other fancy stuff other than the message
 		// which is a simple string in this case.
-		String[] words = tuple.getString(MESSAGE_INDEX).split("[* *]+");
-		for (int i = 0; i < words.length; ++i) {
-			emitTupleOnStream(tuple, new Values(words[i]), outStream_);
+		String sentence = tuple.getString(MESSAGE_INDEX);
+		
+		if(sentence != null && !sentence.isEmpty()) {
+			String[] words = sentence.split("[* *]+");
+			for (int i = 0; i < words.length; ++i) {
+				emitTupleOnStream(tuple, new Values(words[i]), outStream_);
+			}
 		}
 		
 	}

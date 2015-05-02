@@ -61,13 +61,19 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			new ConcurrentHashMap<Long, ConcurrentHashMap<String, Integer>>();
 
 	// word vs List<anchors>
-	private ConcurrentHashMap<String, List<Tuple>> wordVsAnchors_ = new ConcurrentHashMap<String, List<Tuple>>();
+	private ConcurrentHashMap<String, List<Tuple>> wordVsAnchors_ = 
+			new ConcurrentHashMap<String, List<Tuple>>();
 
 	public AckingEdgeAggregatorBolt(String stream) {
 		outputStream_ = stream;
 	}
 	
 	public Long getDelayFor(String word) {
+		
+		if(word == null ||  word.isEmpty()) {
+			return Delays.low.delay_;
+		}
+		
 		char firstChar = word.charAt(0);
 		if (frequent_.contains(firstChar)) {
 			return Delays.high.delay_;
@@ -76,6 +82,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		} else {
 			return Delays.low.delay_;
 		}
+		
 	}
 
 	public void pushUpdates() {
@@ -84,6 +91,9 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			// push updates only if last push time is more than delay
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
 				ConcurrentHashMap<String, Integer> counts = delayVsCounts_.get(delay);
+				if(counts == null || counts.isEmpty()) {
+					continue;
+				}
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
@@ -132,7 +142,8 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		// counts when the push was >= delay time, as done is
 		// pushUpdates()
 		Long delay = getDelayFor(word);
-		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay);
+		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
+				new ConcurrentHashMap<String, Integer>() : delayVsCounts_.get(delay);
 		Integer count = 1;
 		if(curMap.contains(word)) {
 			count += curMap.get(word);
