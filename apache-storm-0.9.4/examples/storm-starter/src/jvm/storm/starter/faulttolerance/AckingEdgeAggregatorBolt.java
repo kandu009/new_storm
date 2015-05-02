@@ -35,7 +35,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	private static final HashSet<Character> lessFrequent_ = new HashSet<Character>(
 			new ArrayList<Character>(Arrays.asList('g')));
 	
-	private static final java.util.logging.Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
+	private static final Logger LOG = LoggerFactory.getLogger(AckingEdgeAggregatorBolt.class);
 	
 	public enum Delays {
 
