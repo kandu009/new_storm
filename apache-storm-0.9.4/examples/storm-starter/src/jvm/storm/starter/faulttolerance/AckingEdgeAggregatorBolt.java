@@ -10,6 +10,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -18,6 +21,8 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
+
+import com.sun.istack.internal.logging.Logger;
 
 public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 
@@ -29,6 +34,8 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			new ArrayList<Character>(Arrays.asList('e', 'f')));
 	private static final HashSet<Character> lessFrequent_ = new HashSet<Character>(
 			new ArrayList<Character>(Arrays.asList('g')));
+	
+	private static final Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
 	
 	public enum Delays {
 
@@ -92,6 +99,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 			if (now - delayVsLastPushTime_.get(delay) >= delay) {
 				ConcurrentHashMap<String, Integer> counts = delayVsCounts_.get(delay);
 				if(counts == null || counts.isEmpty()) {
+					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing !");
 					continue;
 				}
 				for (String word : counts.keySet()) {
@@ -150,6 +158,12 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		}
 		curMap.put(word, count);
 		delayVsCounts_.put(delay, curMap);
+		
+		StringBuilder sb = new StringBuilder();
+		for(String w: curMap.keySet()) {
+			sb.append(w).append(":").append(curMap.get(w)).append(",");
+		}
+		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay +"}, and value {" + sb.toString() +"} !");
 		
 		pushUpdates();
 	}
