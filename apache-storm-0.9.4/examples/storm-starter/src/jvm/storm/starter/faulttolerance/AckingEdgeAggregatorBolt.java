@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.org.apache.xalan.internal.xsltc.runtime.Hashtable;
+
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -33,7 +35,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	private static final HashSet<Character> lessFrequent_ = new HashSet<Character>(
 			new ArrayList<Character>(Arrays.asList('g')));
 	
-	private static final Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
+	private static final java.util.logging.Logger LOG = LoggerFactory.getLogger(AckingPrintBolt.class);
 	
 	public enum Delays {
 
@@ -101,10 +103,17 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 					LOG.info("Not found any messsages in delayVsCounts_ for delay {" + delay +"}, so continuing !");
 					continue;
 				}
-				updatePushTime = true;
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
+					StringBuilder sb = new StringBuilder();
+					for(Tuple a :anchors) {
+						sb.append(a.getString(1)).append(",");
+					}
+					LOG.info("Emiting tuple with word {" + word
+							+ "} on taskId {" + getThisTaskId()
+							+ "} and anchors {" + sb.toString() + "}");
 					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
+					updatePushTime = true;
 				}
 				// reset the counts after pushing
 				if(updatePushTime) {
@@ -149,6 +158,15 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		Long delay = getDelayFor(word);
 		ConcurrentHashMap<String, Integer> curMap = delayVsCounts_.get(delay) == null ? 
 				new ConcurrentHashMap<String, Integer>() : delayVsCounts_.get(delay);
+		
+		StringBuilder sb1 = new StringBuilder();
+		for(String w: curMap.keySet()) {
+			sb1.append(w).append(":").append(curMap.get(w)).append(",");
+		}
+		LOG.info("Before pushing values to delayVsCounts_ for delay {" + delay
+				+ "}, and value {" + sb1.toString() + "} and word {" + word
+				+ "} on taskId {" + getThisTaskId() + "}!");
+				
 		Integer count = 1;
 		if(curMap.contains(word)) {
 			count += curMap.get(word);
@@ -160,7 +178,9 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		for(String w: curMap.keySet()) {
 			sb.append(w).append(":").append(curMap.get(w)).append(",");
 		}
-		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay +"}, and value {" + sb.toString() +"} and word {" + word +"} !");
+		LOG.info("Pushing values to delayVsCounts_ for delay {" + delay
+				+ "}, and value {" + sb.toString() + "} and word {" + word
+				+ "} on taskId {" + getThisTaskId() + "}!");
 		
 		pushUpdates();
 	}
