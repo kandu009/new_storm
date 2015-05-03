@@ -65,6 +65,7 @@ public class AckingExclamationTopology1 {
 		boolean _isDistributed;
 	    SpoutOutputCollector _collector;
 		Boolean enableStormsTimeoutMechanism_;
+		private Random rand_;
 
 	    public AckingExclamationSpout() {
 	        this(true);
@@ -78,17 +79,17 @@ public class AckingExclamationTopology1 {
 	    public void open(Map conf, TopologyContext context, SpoutOutputCollector collector) {
 	        _collector = collector;
 	        enableStormsTimeoutMechanism_ = context.enableStormDefaultTimeoutMechanism();
+	        rand_ = new Random();
 	    }
 
 		@Override
 	    public void nextTuple() {
 	        Utils.sleep(100);
 	        final String[] words = new String[] {"distributed", "computing", "systems", "group"};
-	        final Random rand = new Random();
-	        final String word = words[rand.nextInt(words.length)];
+	        final String word = words[rand_.nextInt(words.length)];
 			// this is to make sure that we are always sending the TupleId in
 			// tuple[0] and the actual message only starts from tuple[1]
-	        String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+	        String tupleId = new StringBuilder().append(rand_.nextInt()).toString();
 	        
 	        Values vals = new Values(tupleId);
 	        vals.add(word);

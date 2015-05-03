@@ -68,14 +68,13 @@ public class AckingWordCountTopology {
 		@Override
 		public void nextTuple() {
 			Utils.sleep(100);
-			final Random rand = new Random();
 			String[] sentences = new String[] { "the cow jumped over the moon",
 					"an apple a day keeps the doctor away",
 					"four score and seven years ago",
 					"snow white and the seven dwarfs",
 					"i am at two with nature" };
 			String sentence = sentences[_rand.nextInt(sentences.length)];
-			String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+			String tupleId = new StringBuilder().append(_rand.nextInt()).toString();
 
 			Values vals = new Values(tupleId);
 			vals.add(sentence);
