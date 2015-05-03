@@ -79,6 +79,8 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 		int index = _rand.nextInt(sentences.length);
 		String sentence = sentences[index];
 		String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+		
+		System.out.println("Emiting tuple {" + tupleId +"} from spout !");
 
 		Values vals = new Values(sentence);
 
@@ -121,7 +123,7 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 	public void fail(Object msgId) {
 		LOG.error("Tuple with message ID {" + msgId.toString() + "} has failed");
 		if(tupleTracker_.get(msgId.toString()) != null) {
-			emitTuple(tupleTracker_.get(msgId.toString()));
+//			emitTuple(tupleTracker_.get(msgId.toString()));
 			tupleTracker_.remove(msgId.toString());
 		}
 	}
