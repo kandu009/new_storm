@@ -78,7 +78,7 @@ public class AckingRandomSentenceSpout extends BaseRichSpout {
 
 		int index = _rand.nextInt(sentences.length);
 		String sentence = sentences[index];
-		String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+		String tupleId = new StringBuilder().append(_rand.nextInt()).toString();
 
 		Values vals = new Values(tupleId);
 		vals.add(sentence);
@@ -103,7 +103,7 @@ public class AckingRandomSentenceSpout extends BaseRichSpout {
 	public void emitTuple(int index) {
 		
 		String sentence = sentences[index];
-		String tupleId = new StringBuilder().append(new Random(Integer.MAX_VALUE).nextInt()).toString();
+		String tupleId = new StringBuilder().append(_rand.nextInt()).toString();
 
 		Values vals = new Values(sentence);
 
