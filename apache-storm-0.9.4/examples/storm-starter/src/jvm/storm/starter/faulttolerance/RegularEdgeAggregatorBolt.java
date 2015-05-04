@@ -125,7 +125,7 @@ public class RegularEdgeAggregatorBolt extends BaseRichBolt {
 	public void execute(Tuple tuple) {
 		// this is to kind of achieve randomness as emitted by a
 		// realistic source like twitter or some data feed
-		Utils.sleep(Math.abs(_rand.nextInt() % 500));
+		Utils.sleep(Math.abs(_rand.nextInt()) % 500);
 
 		String word = tuple.getString(MESSAGE_INDEX);
 		

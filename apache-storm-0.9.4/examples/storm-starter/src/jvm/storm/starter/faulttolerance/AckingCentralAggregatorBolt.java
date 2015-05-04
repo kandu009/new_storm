@@ -120,7 +120,7 @@ public class AckingCentralAggregatorBolt extends AbstractAckingBaseRichBolt {
 	@Override
 	public void customExecute(Tuple tuple) {
 
-		Utils.sleep(Math.abs(rand_.nextInt() % 200));
+		Utils.sleep(Math.abs(rand_.nextInt()) % 200);
 		
 		String character = new StringBuilder().append(tuple.getString(MESSAGE_INDEX_1).charAt(0)).toString(); 
 		

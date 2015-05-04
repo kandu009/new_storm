@@ -37,7 +37,7 @@ public class AckingPrintBolt extends AbstractAckingBaseRichBolt {
 	public void customExecute(Tuple tuple) {
 		
 		// just like that
-		Utils.sleep(Math.abs(_rand.nextInt() % 100));
+		Utils.sleep(Math.abs(_rand.nextInt()) % 100);
 		
 		// As Spout is sending directly to this bolt and it provides no
 		// other fancy stuff other than the message
