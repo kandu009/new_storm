@@ -61,7 +61,7 @@ public class RegularWordCountTopology2 {
 
 		if (args != null && args.length > 0) {
 			conf.setNumWorkers(3);
-			conf.setMessageTimeoutSecs(60);
+			conf.setMessageTimeoutSecs(120);
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
 						builder.createTopology());

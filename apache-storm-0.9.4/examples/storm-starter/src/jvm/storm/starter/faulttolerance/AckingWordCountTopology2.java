@@ -58,9 +58,9 @@ public class AckingWordCountTopology2 {
 		builder.setBolt(PRINTER_BOLT, printBolt, 3).shuffleGrouping(
 				CENTRALAGGREGATOR_BOLT, CENTRALAGGREGATOR_PRINT_STREAM);
 
-		builder.addStreamTimeout(SPLITER_BOLT, EDGEAGGREGATOR_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM, 200000L)	// 50
-			.addStreamTimeout(EDGEAGGREGATOR_BOLT, CENTRALAGGREGATOR_BOLT, EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM, 250000L)	//2500
-			.addStreamTimeout(CENTRALAGGREGATOR_BOLT, PRINTER_BOLT, CENTRALAGGREGATOR_PRINT_STREAM, 150000L);	//4200
+		builder.addStreamTimeout(SPLITER_BOLT, EDGEAGGREGATOR_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM, 350000L)	// 50
+			.addStreamTimeout(EDGEAGGREGATOR_BOLT, CENTRALAGGREGATOR_BOLT, EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM, 300000L)	//2500
+			.addStreamTimeout(CENTRALAGGREGATOR_BOLT, PRINTER_BOLT, CENTRALAGGREGATOR_PRINT_STREAM, 250000L);	//4200
 
 		Config conf = new Config();
 		conf.setDefaultPerEdgeTimeout(100L);
@@ -68,7 +68,7 @@ public class AckingWordCountTopology2 {
 
 		if (args != null && args.length > 0) {
 			conf.setNumWorkers(3);
-			conf.setMessageTimeoutSecs(60);
+			conf.setMessageTimeoutSecs(120);
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
 						builder.createTopology());
