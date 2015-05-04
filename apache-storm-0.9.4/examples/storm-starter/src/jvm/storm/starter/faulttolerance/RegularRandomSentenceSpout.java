@@ -74,7 +74,8 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 
 		// this is to kind of achieve randomness as emitted by a realistic
 		// source like twitter or some data feed
-		Utils.sleep(Math.abs(_rand.nextInt() % 100));
+//		Utils.sleep(Math.abs(_rand.nextInt() % 100));
+		Utils.sleep(Math.abs(2000));
 
 		int index = _rand.nextInt(sentences.length);
 		String sentence = sentences[index];
@@ -97,6 +98,8 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 	}
 	
 	public void emitTuple(int index) {
+		
+		Utils.sleep(Math.abs(1000));
 		
 		String sentence = sentences[index];
 		String tupleId = new StringBuilder().append(_rand.nextInt()).toString();
@@ -123,7 +126,7 @@ public class RegularRandomSentenceSpout extends BaseRichSpout {
 	public void fail(Object msgId) {
 		LOG.error("Tuple with message ID {" + msgId.toString() + "} has failed");
 		if(tupleTracker_.get(msgId.toString()) != null) {
-			emitTuple(tupleTracker_.get(msgId.toString()));
+//			emitTuple(tupleTracker_.get(msgId.toString()));
 			tupleTracker_.remove(msgId.toString());
 		}
 	}

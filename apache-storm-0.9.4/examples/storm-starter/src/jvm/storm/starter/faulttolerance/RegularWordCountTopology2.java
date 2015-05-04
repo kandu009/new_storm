@@ -47,7 +47,7 @@ public class RegularWordCountTopology2 {
 
 		builder.setBolt(SPLITER_BOLT, splitterBolt, 2).shuffleGrouping(SPOUT, SPOUT_SPLITTER_STREAM);
 
-		builder.setBolt(EDGEAGGREGATOR_BOLT, edAggregatorBolt, 6)
+		builder.setBolt(EDGEAGGREGATOR_BOLT, edAggregatorBolt, 8)
 				.shuffleGrouping(SPLITER_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM);
 
 		builder.setBolt(CENTRALAGGREGATOR_BOLT, centralAggregatorBolt, 6)
@@ -60,7 +60,7 @@ public class RegularWordCountTopology2 {
 		conf.setUseStormTimeoutMechanism(true);
 
 		if (args != null && args.length > 0) {
-			conf.setNumWorkers(3);
+			conf.setNumWorkers(4);
 			conf.setMessageTimeoutSecs(60);
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
