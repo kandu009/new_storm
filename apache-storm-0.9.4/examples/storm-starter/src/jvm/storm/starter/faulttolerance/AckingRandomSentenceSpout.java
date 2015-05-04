@@ -105,7 +105,8 @@ public class AckingRandomSentenceSpout extends BaseRichSpout {
 		String sentence = sentences[index];
 		String tupleId = new StringBuilder().append(_rand.nextInt()).toString();
 
-		Values vals = new Values(sentence);
+		Values vals = new Values(tupleId);
+		vals.add(sentence);
 
 		if (enableStormsTimeoutMechanism_) {
 			// since we want Storm to track the tuples and its acks here
