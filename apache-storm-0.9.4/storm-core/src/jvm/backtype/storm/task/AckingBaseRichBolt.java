@@ -303,7 +303,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		ackTracker_.put(defaultPerEdgeTimeout_, new RotatingMap<String, List<Tuple>>(ROTATING_MAP_BUCKET_SIZE));
 		LOG.info("Created an Ack Tracker with default timeout {" + defaultPerEdgeTimeout_ + "}");
 		ackTrackerVsLastRotate_.put(defaultPerEdgeTimeout_, System.currentTimeMillis());
-		LOG.info("Added an entry for default timeout { " + ackTrackerVsLastRotate_.get(defaultPerEdgeTimeout_) + "} in LastRotate dataset");
+		LOG.info("Added an entry for default timeout { " + defaultPerEdgeTimeout_ + "} in LastRotate dataset");
 	}
 	
 	private void updateTimeouts(Object timeouts) {
