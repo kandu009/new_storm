@@ -34,6 +34,51 @@ public class RegularWordCountTopology2 {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		
+		int spoutParalellism = 2;
+		int splitterParalellism = 2;
+		int edgeParalellism = 2;
+		int centreParalellism = 2;
+		int printerParalellism = 2;
+		
+		boolean useStormTimeout = true;
+		
+		int numberOfWorkers = 3;
+		int messageTimeout = 120;
+		
+		if(args.length > 0) {
+			int argSize = args.length;
+			spoutParalellism = Integer.parseInt(args[args.length-argSize]);
+			argSize--;
+			if(argSize > 0) {
+				splitterParalellism = Integer.parseInt(args[args.length-argSize]);
+			}
+			argSize--;
+			if(argSize > 0) {
+				edgeParalellism = Integer.parseInt(args[args.length-argSize]);
+			}
+			argSize--;
+			if(argSize > 0) {
+				centreParalellism = Integer.parseInt(args[args.length-argSize]);
+			}
+			argSize--;
+			if(argSize > 0) {
+				printerParalellism = Integer.parseInt(args[args.length-argSize]);
+			}
+			argSize--;
+			if(argSize > 0) {
+				useStormTimeout = args[args.length-argSize].toLowerCase().equals("true") ? true : false;
+			}
+			argSize--;
+			if(argSize > 0) {
+				numberOfWorkers = Integer.parseInt(args[args.length-argSize]);
+			}
+			argSize--;
+			if(argSize > 0) {
+				messageTimeout = Integer.parseInt(args[args.length-argSize]);
+			}
+			
+		}
 
 		RegularRandomSentenceSpout spout = new RegularRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
 		RegularSplitterBolt splitterBolt = new RegularSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
@@ -43,25 +88,25 @@ public class RegularWordCountTopology2 {
 		
 		TopologyBuilder builder = new TopologyBuilder();
 
-		builder.setSpout(SPOUT, spout, 2);
+		builder.setSpout(SPOUT, spout, spoutParalellism);
 
-		builder.setBolt(SPLITER_BOLT, splitterBolt, 2).shuffleGrouping(SPOUT, SPOUT_SPLITTER_STREAM);
+		builder.setBolt(SPLITER_BOLT, splitterBolt, splitterParalellism).shuffleGrouping(SPOUT, SPOUT_SPLITTER_STREAM);
 
-		builder.setBolt(EDGEAGGREGATOR_BOLT, edAggregatorBolt, 8)
+		builder.setBolt(EDGEAGGREGATOR_BOLT, edAggregatorBolt, edgeParalellism)
 				.shuffleGrouping(SPLITER_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM);
 
-		builder.setBolt(CENTRALAGGREGATOR_BOLT, centralAggregatorBolt, 6)
+		builder.setBolt(CENTRALAGGREGATOR_BOLT, centralAggregatorBolt, centreParalellism)
 				.shuffleGrouping(EDGEAGGREGATOR_BOLT, EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
 
-		builder.setBolt(PRINTER_BOLT, printBolt, 3).shuffleGrouping(
+		builder.setBolt(PRINTER_BOLT, printBolt, printerParalellism).shuffleGrouping(
 				CENTRALAGGREGATOR_BOLT, CENTRALAGGREGATOR_PRINT_STREAM);
 
 		Config conf = new Config();
-		conf.setUseStormTimeoutMechanism(true);
+		conf.setUseStormTimeoutMechanism(useStormTimeout);
 
 		if (args != null && args.length > 0) {
-			conf.setNumWorkers(3);
-			conf.setMessageTimeoutSecs(120);
+			conf.setNumWorkers(numberOfWorkers);
+			conf.setMessageTimeoutSecs(messageTimeout);
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
 						builder.createTopology());

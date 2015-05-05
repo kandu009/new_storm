@@ -134,7 +134,7 @@ public class AckingRandomSentenceSpout extends BaseRichSpout {
 	public void fail(Object msgId) {
 		LOG.error("Tuple with message ID {" + msgId.toString() + "} has failed");
 		if(tupleTracker_.get(msgId.toString()) != null) {
-//			emitTuple(tupleTracker_.get(msgId.toString()));
+			emitTuple(tupleTracker_.get(msgId.toString()));
 			tupleTracker_.remove(msgId.toString());
 		}
 	}
