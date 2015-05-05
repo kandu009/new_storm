@@ -80,11 +80,11 @@ public class SimpleWordCountTopology2 {
 			
 		}
 
-		RegularRandomSentenceSpout spout = new RegularRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
-		RegularSplitterBolt splitterBolt = new RegularSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
-		RegularEdgeAggregatorBolt edAggregatorBolt = new RegularEdgeAggregatorBolt(EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
-		RegularCentralAggregatorBolt centralAggregatorBolt = new RegularCentralAggregatorBolt(CENTRALAGGREGATOR_PRINT_STREAM);
-		RegularPrintBolt printBolt = new RegularPrintBolt();
+		SimpleRandomSentenceSpout spout = new SimpleRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
+		SimpleSplitterBolt splitterBolt = new SimpleSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
+		SimpleEdgeAggregatorBolt edAggregatorBolt = new SimpleEdgeAggregatorBolt(EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
+		SimpleCentralAggregatorBolt centralAggregatorBolt = new SimpleCentralAggregatorBolt(CENTRALAGGREGATOR_PRINT_STREAM);
+		SimplePrintBolt printBolt = new SimplePrintBolt();
 		
 		TopologyBuilder builder = new TopologyBuilder();
 
