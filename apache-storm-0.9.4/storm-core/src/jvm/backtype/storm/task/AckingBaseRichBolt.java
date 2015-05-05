@@ -102,8 +102,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	}
 	
 	public final void execute(Tuple tuple) {
-		
-		checkForTimedOutTuples();
+
+		// If the user decides to use Storm's default timeout mechanism, then
+		// ack the tuple in Storm way
+		if(enableStormDefaultTimeout_) {
+			// RK NOTE: adding this only to check if failures are correctly
+			// identified by default storm topology 
+			collector_.ack(tuple);
+		}
 		
 		if(tuple.getValue(ACTUAL_MESSAGE_INDEX).toString().startsWith(ACK_MESSAGE_START_TOKEN)) {
 			handleAckMessage(tuple);
@@ -114,13 +120,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 		customExecute(tuple);
 
-		// If the user decides to use Storm's default timeout mechanism, then
-		// ack the tuple in Storm way
-		if(enableStormDefaultTimeout_) {
-			// RK NOTE: adding this only to check if failures are correctly
-			// identified by default storm topology 
-			collector_.ack(tuple);
-		}
+		checkForTimedOutTuples();
+		
 	}
 
 	/**
