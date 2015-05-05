@@ -38,9 +38,9 @@ public class AckingWordCountTopology2 {
 		
 		int spoutParalellism = 2;
 		int splitterParalellism = 2;
-		int edgeParalellism = 2;
-		int centreParalellism = 2;
-		int printerParalellism = 2;
+		int edgeParalellism = 8;
+		int centreParalellism = 6;
+		int printerParalellism = 3;
 
 		long splitEdgeTimeout = 350000L;
 		long edgeCentreTimeout = 300000L;
@@ -52,8 +52,8 @@ public class AckingWordCountTopology2 {
 		int numberOfWorkers = 3;
 		int messageTimeout = 120;
 		
-		if(args.length > 0) {
-			int argSize = args.length;
+		if(args.length > 1) {
+			int argSize = args.length-1;
 			spoutParalellism = Integer.parseInt(args[args.length-argSize]);
 			argSize--;
 			if(argSize > 0) {
