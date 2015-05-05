@@ -76,6 +76,11 @@ public class SimpleEdgeAggregatorBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
+		
+		if (enableStormsTimeoutMechanism_) {
+			collector_.ack(tuple);
+		}
+		
 		// this is to kind of achieve randomness as emitted by a
 		// realistic source like twitter or some data feed
 		Utils.sleep(500);

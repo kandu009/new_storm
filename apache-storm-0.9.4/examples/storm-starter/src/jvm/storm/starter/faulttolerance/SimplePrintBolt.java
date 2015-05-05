@@ -17,16 +17,24 @@ public class SimplePrintBolt extends BaseRichBolt {
 	// message
 	private static final int MESSAGE_INDEX_1 = 0;
 	private static final int MESSAGE_INDEX_2 = 1;
+	private Boolean enableStormsTimeoutMechanism_;
+	private OutputCollector collector_;
 	
 	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
 
 	@Override
 	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
+		collector_ = collector;
+		enableStormsTimeoutMechanism_ = context.enableStormDefaultTimeoutMechanism();
 	}
 
 	@Override
 	public void execute(Tuple tuple) {
+		
+		if (enableStormsTimeoutMechanism_) {
+			collector_.ack(tuple);
+		}
 		
 		// just like that
 		Utils.sleep(500);

@@ -84,6 +84,10 @@ public class SimpleCentralAggregatorBolt extends BaseRichBolt {
 	@Override
 	public void execute(Tuple tuple) {
 		
+		if (enableStormsTimeoutMechanism_) {
+			collector_.ack(tuple);
+		}
+		
 		Utils.sleep(1000);
 		
 		String character = new StringBuilder().append(tuple.getString(MESSAGE_INDEX_1).charAt(0)).toString(); 
