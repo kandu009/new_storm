@@ -19,7 +19,7 @@ import backtype.storm.topology.TopologyBuilder;
  */
 public class SimpleWordCountTopology2 {
 
-	private static final String SPOUT_SPLITTER_STREAM = "spoutSplitterStream";
+	/*private static final String SPOUT_SPLITTER_STREAM = "spoutSplitterStream";
 	private static final String SPLITTER_EDGEAGGREGATOR_STREAM = "splitterEdgeAggregatorStream";
 	private static final String EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM = "edgeAggregatorCentralaggregatorStream";
 	private static final String CENTRALAGGREGATOR_PRINT_STREAM = "superAggregatorPrintStream";
@@ -28,7 +28,17 @@ public class SimpleWordCountTopology2 {
 	private static final String SPLITER_BOLT = "splitterBolt";
 	private static final String EDGEAGGREGATOR_BOLT = "edgeAggregatorBolt";
 	private static final String CENTRALAGGREGATOR_BOLT = "centralAggregatorBolt";
-	private static final String PRINTER_BOLT = "printerBolt";
+	private static final String PRINTER_BOLT = "printerBolt";*/
+	private static final String SPOUT_SPLITTER_STREAM = "ss";
+	private static final String SPLITTER_EDGEAGGREGATOR_STREAM = "ses";
+	private static final String EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM = "ecs";
+	private static final String CENTRALAGGREGATOR_PRINT_STREAM = "cas";
+
+	private static final String SPOUT = "s";
+	private static final String SPLITER_BOLT = "sb";
+	private static final String EDGEAGGREGATOR_BOLT = "eb";
+	private static final String CENTRALAGGREGATOR_BOLT = "cb";
+	private static final String PRINTER_BOLT = "pb";
 
 	/**
 	 * @param args
