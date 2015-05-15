@@ -116,7 +116,7 @@ public class SimpleWordCountTopology2 {
 
 		if (args != null && args.length > 0) {
 			conf.setNumWorkers(numberOfWorkers);
-			conf.setMessageTimeoutSecs(messageTimeout);
+			if(useStormTimeout) { conf.setMessageTimeoutSecs(messageTimeout); }
 			try {
 				StormSubmitter.submitTopologyWithProgressBar(args[0], conf,
 						builder.createTopology());
