@@ -215,13 +215,24 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			String tupleId = getTupleId(componentId_, targetId, streamId);
 			Values newVals = new Values(tupleId);
 			newVals.addAll(values);
+			
+			StringBuilder srcTupleId = new StringBuilder();
+			if(anchors != null && !anchors.isEmpty()) {
+				for(Tuple t : anchors) {
+					srcTupleId.append(t.getString(0)).append(",");	// this is to track which source tuple is tied to which target tuple
+				}
+			}
 			// RK NOTE: we are acking the tuples if enableStormDefaultTimeout_
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, anchors, newVals);
-				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
+				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId
+						+ "} from task {" + context_.getThisTaskId()
+						+ "}, source tuple ID's {" + srcTupleId.toString()+ "}");
 			} else {
-				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId +"} from task {" + context_.getThisTaskId() + "}");
+				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId
+						+ "} from task {" + context_.getThisTaskId()
+						+ "}, source tuple ID's {" + srcTupleId.toString()+ "}");
 				collector_.emit(streamId, newVals);
 			}
 

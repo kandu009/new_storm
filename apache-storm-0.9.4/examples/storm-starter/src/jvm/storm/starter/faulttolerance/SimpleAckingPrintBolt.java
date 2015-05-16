@@ -42,7 +42,7 @@ public class SimpleAckingPrintBolt extends AbstractAckingBaseRichBolt {
 		}
 		counts_.put(word, count);
 		
-		System.out.println("ERROR: Super Count for characer {" + word + "} -> count {" + count + "}");
+		System.out.println("Super Count for characer {" + word + "} -> count {" + count + "}");
 	}
 
 	@Override
