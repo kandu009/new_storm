@@ -31,7 +31,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 
-	public static java.util.logging.Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
+	public static Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
 
 	private static final Integer ROTATING_MAP_BUCKET_SIZE = 3;
 	private static final String ACK_MESSAGE_DELIMITER = "_";
