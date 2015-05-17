@@ -127,7 +127,7 @@ public class SimpleAckingRandomSentenceSpout extends BaseRichSpout {
 	@Override
 	public void fail(Object msgId) {
 		if(tupleTracker_.get(msgId.toString()) != null) {
-			System.out.println("ERROR: Tuple with message ID {" + msgId.toString() + "} has failed");
+			System.out.println("ERROR: Tuple with message ID {" + msgId.toString() + "} has failed"); 
 			emitTuple(tupleTracker_.get(msgId.toString()));
 			tupleTracker_.remove(msgId.toString());
 		}

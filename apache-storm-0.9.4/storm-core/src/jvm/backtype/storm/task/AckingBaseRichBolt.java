@@ -163,7 +163,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
-		LOG.info("HandleAckMessage {" + ack + "} in task {" + context_.getThisTaskId() + "}");
+		LOG.info("HandleAckMessage {" + ack  + "} in task {" + context_.getThisTaskId() + "}");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
