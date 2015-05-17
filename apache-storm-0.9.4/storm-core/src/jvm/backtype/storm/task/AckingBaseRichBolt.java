@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
 
 import backtype.storm.generated.ComponentCommon;
 import backtype.storm.generated.Grouping;
@@ -61,9 +60,9 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	private HashSet<String> sendAckStream_ = new HashSet<String>();
 	
 	// <timeout vs <tupleId, OriginalTuple>> 
-	private ConcurrentHashMap<Long, RotatingMap<String, List<Tuple>>> ackTracker_ = new ConcurrentHashMap<Long, RotatingMap<String, List<Tuple>>>();
+	private HashMap<Long, RotatingMap<String, List<Tuple>>> ackTracker_ = new HashMap<Long, RotatingMap<String, List<Tuple>>>();
 	// this is used to keep the last rotated time of each ack Tracker (with a corresponding timeout)
-	private ConcurrentHashMap<Long, Long> ackTrackerVsLastRotate_ = new ConcurrentHashMap<Long, Long>();
+	private HashMap<Long, Long> ackTrackerVsLastRotate_ = new HashMap<Long, Long>();
 	
 	// since this is just constructed once and read everywhere else, it should
 	// be fine even in case of multi threaded environment
