@@ -33,3 +33,14 @@ echo "copying the config file storm.yaml"
 
 echo "restarting zookeeper"
 #cd /home/kandur/research/zookeeper-3.4.6; ./bin/zkServer.sh restart 
+
+echo "resetting log files"
+cd /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs; rm -rf worker*
+
+echo "creating worker log files"
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6700.log
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6701.log
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6702.log
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6703.log
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6704.log
+touch /home/kandur/research/storm_fault_tolerance/new_storm/custom_release/apache-storm-0.9.4/logs/worker-6705.log
