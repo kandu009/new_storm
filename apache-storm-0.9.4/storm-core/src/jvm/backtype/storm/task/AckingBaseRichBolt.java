@@ -191,8 +191,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 					LOG.info("No failed Tuples in this Bucket !!!");
 				}
                 for(String failedTuple : failed.keySet()) {
+                	LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time on taskID {" + context_.getThisTaskId() + "} !!!");
                 	if(enableStormDefaultTimeout_) {
-                		LOG.error("Tuple {" + failedTuple + "} has failed to get an acknowledgement on time on taskID {" + context_.getThisTaskId() + "} !!!");
                 		for(Tuple t : failed.get(failedTuple)) {
                 			collector_.fail(t);
                 		}
