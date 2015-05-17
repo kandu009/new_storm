@@ -31,7 +31,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 
-	public static Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
+	public static java.util.logging.Logger LOG = LoggerFactory.getLogger(ShellSpout.class);
 
 	private static final Integer ROTATING_MAP_BUCKET_SIZE = 3;
 	private static final String ACK_MESSAGE_DELIMITER = "_";
@@ -104,9 +104,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 		// If the user decides to use Storm's default timeout mechanism, then
 		// ack the tuple in Storm way
+		LOG.info("Received tuple {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
 		if(enableStormDefaultTimeout_) {
 			// RK NOTE: adding this only to check if failures are correctly
 			// identified by default storm topology 
+			LOG.info("Storm acking {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
 			collector_.ack(tuple);
 		}
 		
@@ -160,6 +162,8 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// we will not use tupleId for acking messages. 
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
+		
+		LOG.info("HandleAckMessage {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
@@ -240,6 +244,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(timeout);
 			rmap.put(tupleId, anchors);
 			ackTracker_.put(timeout, rmap);
+			LOG.info("Adding tuple {" + tupleId
+					+ "} to the tracker with sourceTuples {" + srcTupleId
+					+ "} timeout Identifier {" + componentId_ + "," + targetId
+					+ "," + streamId + "} and timeout {" + timeout + "}");
 		}
 		
 	}
@@ -283,11 +291,14 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
+		LOG.info("findAndAckTuple {" + tupleKey + "} in task {" + context_.getThisTaskId() + "}");
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
 				rmap.remove(tupleKey);
+			} else {
+				LOG.info("Tuple {" + tupleKey + "} is not present in {" + at + "} in taskId {" + context_.getThisTaskId() + "}");
 			}
 			ackTracker_.put(at, rmap);
 		}
