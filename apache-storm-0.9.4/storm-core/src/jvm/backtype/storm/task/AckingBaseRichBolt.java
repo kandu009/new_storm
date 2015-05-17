@@ -163,7 +163,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
 		
-		LOG.info("HandleAckMessage {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
+		LOG.info("HandleAckMessage {" + ack + "} in task {" + context_.getThisTaskId() + "}");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
@@ -297,10 +297,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(rmap.containsKey(tupleKey)) {
 				LOG.info("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
 				rmap.remove(tupleKey);
+				ackTracker_.put(at, rmap);
 			} else {
 				LOG.info("Tuple {" + tupleKey + "} is not present in {" + at + "} in taskId {" + context_.getThisTaskId() + "}");
 			}
-			ackTracker_.put(at, rmap);
 		}
 	}
 	
