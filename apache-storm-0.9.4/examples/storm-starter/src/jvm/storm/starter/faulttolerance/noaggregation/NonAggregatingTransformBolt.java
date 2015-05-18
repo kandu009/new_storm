@@ -50,6 +50,7 @@ public class NonAggregatingTransformBolt extends BaseRichBolt {
 			} else {
 				collector_.emit(outStream_, new Values(sentence.concat("!")));
 			}
+			System.out.println("Emitting transformed message {" + sentence.concat("!") + "} from Transform Bolt !");
 		}
 	}
 

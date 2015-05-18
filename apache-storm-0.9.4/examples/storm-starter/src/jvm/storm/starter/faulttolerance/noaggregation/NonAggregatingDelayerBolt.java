@@ -62,6 +62,7 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 				} else {
 					collector_.emit(outputStream_, new Values(word));
 				}
+				System.out.println("Emitting delayed message {" + word + "} from Delayer Bolt !");
 				wordVsAnchors_.remove(word);
 				updatePushTime = true;
 			}

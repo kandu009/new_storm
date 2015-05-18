@@ -53,6 +53,7 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 				for(Tuple anchor: anchors) {
 					emitTupleOnStream(anchor, new Values(word), outputStream_);
 				}
+				System.out.println("Emitting delayed message {" + word + "} from Delayer Bolt !");
 				updatePushTime = true;
 				wordVsAnchors_.remove(word);
 			}

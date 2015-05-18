@@ -66,6 +66,8 @@ public class NonAggregatingAckingRandomWordSpout extends BaseRichSpout {
 			_collector.emit(outputStream_, vals);
 		}
 		
+		System.out.println("Emitting {" + tupleId + "} from Spout !");
+		
 		tupleTracker_.put(tupleId, index);
 
 	}
