@@ -31,7 +31,6 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 
 	// these are the words that are just delayed until the end of the current window
 	// but there is no aggregation done, we will forward as many tuples as we receive
-	ArrayList<String> words_ = new ArrayList<String>();
 
 	// word vs anchor (i.e., the source tuple for this current tuple)
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
@@ -50,12 +49,9 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 		
 		// push updates only if last push time is more than delay
 		if (now - lastPushTime_ >= WINDOW_LENGTH) {
-			for (String word : words_) {
+			for (String word : wordVsAnchors_.keySet()) {
 				if (enableStormsTimeoutMechanism_) {
-					List<Tuple> anchors = new ArrayList<Tuple>();
-					if(wordVsAnchors_.containsKey(word)) {
-						anchors = wordVsAnchors_.get(word);
-					}
+					List<Tuple> anchors = wordVsAnchors_.get(word) == null ? new ArrayList<Tuple>() : wordVsAnchors_.get(word);
 					for(Tuple anchor: anchors) {
 						collector_.emit(outputStream_, anchor, new Values(word));
 					}
@@ -63,12 +59,11 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 					collector_.emit(outputStream_, new Values(word));
 				}
 				System.out.println("Emitting delayed message {" + word + "} from Delayer Bolt !");
-				wordVsAnchors_.remove(word);
 				updatePushTime = true;
 			}
 			// reset the counts after pushing
 			if(updatePushTime) {
-				words_.clear();
+				wordVsAnchors_.clear();
 				lastPushTime_ = now;
 			}
 		}
@@ -98,7 +93,6 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 			l.addAll(wordVsAnchors_.get(word));
 		}
 		wordVsAnchors_.put(word, l);
-		words_.add(word);
 		
 		pushUpdates();
 	}

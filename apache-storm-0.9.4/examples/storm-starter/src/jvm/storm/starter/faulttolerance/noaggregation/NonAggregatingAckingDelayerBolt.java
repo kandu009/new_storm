@@ -31,7 +31,6 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 
 	// these are the words that are just delayed until the end of the current window
 	// but there is no aggregation done, we will forward as many tuples as we receive
-	ArrayList<String> words_ = new ArrayList<String>();
 
 	// word vs anchor (i.e., the source tuple for this current tuple)
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
@@ -45,21 +44,17 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 		boolean updatePushTime = false;
 		// push updates only if last push time is more than delay
 		if (now - lastPushTime_ >= WINDOW_LENGTH) {
-			for (String word : words_) {
-				List<Tuple> anchors = new ArrayList<Tuple>();
-				if(wordVsAnchors_.containsKey(word)) {
-					anchors = wordVsAnchors_.get(word);
-				}
+			for (String word : wordVsAnchors_.keySet()) {
+				List<Tuple> anchors = wordVsAnchors_.get(word) == null ? new ArrayList<Tuple>() : wordVsAnchors_.get(word);
 				for(Tuple anchor: anchors) {
 					emitTupleOnStream(anchor, new Values(word), outputStream_);
 				}
 				System.out.println("Emitting delayed message {" + word + "} from Delayer Bolt !");
 				updatePushTime = true;
-				wordVsAnchors_.remove(word);
 			}
 			// reset the counts after pushing
 			if(updatePushTime) {
-				words_.clear();
+				wordVsAnchors_.clear();
 				lastPushTime_ = now;
 			}
 		}
@@ -83,7 +78,6 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 			l.addAll(wordVsAnchors_.get(word));
 		}
 		wordVsAnchors_.put(word, l);
-		words_.add(word);
 
 		pushUpdates();
 	}
