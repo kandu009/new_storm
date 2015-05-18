@@ -98,6 +98,7 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 			l.addAll(wordVsAnchors_.get(word));
 		}
 		wordVsAnchors_.put(word, l);
+		words_.add(word);
 		
 		pushUpdates();
 	}
