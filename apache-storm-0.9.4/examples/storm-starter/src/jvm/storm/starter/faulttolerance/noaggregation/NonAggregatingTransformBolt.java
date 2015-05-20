@@ -36,12 +36,12 @@ public class NonAggregatingTransformBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
+
+		Utils.sleep(100);
 		
 		if (enableStormsTimeoutMechanism_) {
 			collector_.ack(tuple);
 		}
-
-		Utils.sleep(100);
 
 		String sentence = tuple.getString(MESSAGE_INDEX);
 		if(sentence != null && !sentence.isEmpty()) {

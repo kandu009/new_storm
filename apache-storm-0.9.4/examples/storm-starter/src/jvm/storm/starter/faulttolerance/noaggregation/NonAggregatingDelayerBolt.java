@@ -13,6 +13,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
 
 public class NonAggregatingDelayerBolt extends BaseRichBolt {
 
@@ -78,6 +79,8 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 
 	@Override
 	public void execute(Tuple tuple) {
+		
+		Utils.sleep(100);
 		
 		if (enableStormsTimeoutMechanism_) {
 			collector_.ack(tuple);

@@ -13,6 +13,7 @@ import backtype.storm.topology.AckingOutputFieldsDeclarer;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import backtype.storm.utils.Utils;
 
 public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt {
 
@@ -68,6 +69,8 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 	@Override
 	public void customExecute(Tuple tuple) {
 
+		Utils.sleep(100);
+		
 		String word = tuple.getString(MESSAGE_INDEX_1); 
 		
 		// we need to populate the anchors list belonging to this character
