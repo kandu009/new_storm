@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingRandomWordSpout extends BaseRichSpout {
+public class DelayerRandomWordSpout extends BaseRichSpout {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -29,7 +29,7 @@ public class NonAggregatingRandomWordSpout extends BaseRichSpout {
 	private static final String[] sentences = new String[] {
 		"ampere", "distributed", "eat", "barometer", "fun", "gift", "cadmium" };
 	
-	public NonAggregatingRandomWordSpout(String stream) {
+	public DelayerRandomWordSpout(String stream) {
 		outputStream_ = stream;
 	}
 

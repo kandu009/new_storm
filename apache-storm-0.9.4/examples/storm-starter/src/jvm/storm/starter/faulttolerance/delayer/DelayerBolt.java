@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +15,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingDelayerBolt extends BaseRichBolt {
+public class DelayerBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -39,7 +39,7 @@ public class NonAggregatingDelayerBolt extends BaseRichBolt {
 	private OutputCollector collector_;
 	Boolean enableStormsTimeoutMechanism_;
 
-	public NonAggregatingDelayerBolt(String stream) {
+	public DelayerBolt(String stream) {
 		outputStream_ = stream;
 	}
 	

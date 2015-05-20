@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer.acking;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +12,7 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingAckingRandomWordSpout extends BaseRichSpout {
+public class AckingDelayerRandomWordSpout extends BaseRichSpout {
 	
 	private static final long serialVersionUID = 1L;
 
@@ -29,7 +29,7 @@ public class NonAggregatingAckingRandomWordSpout extends BaseRichSpout {
 	
 	private HashMap<String, Integer> tupleTracker_ = new HashMap<String, Integer>();
 	
-	public NonAggregatingAckingRandomWordSpout(String stream) {
+	public AckingDelayerRandomWordSpout(String stream) {
 		outputStream_ = stream;
 	}
 

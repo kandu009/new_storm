@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer.acking;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +15,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt {
+public class AckingDelayerBolt extends AbstractAckingBaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -36,7 +36,7 @@ public class NonAggregatingAckingDelayerBolt extends AbstractAckingBaseRichBolt 
 	// word vs anchor (i.e., the source tuple for this current tuple)
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
 
-	public NonAggregatingAckingDelayerBolt(String stream) {
+	public AckingDelayerBolt(String stream) {
 		outputStream_ = stream;
 	}
 	

@@ -1,27 +1,23 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer.acking;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.AckingOutputFieldsDeclarer;
-import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingAckingTransformBolt extends AbstractAckingBaseRichBolt {
+public class AckingDelayerPrintBolt extends AbstractAckingBaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX = 1;
-	private String outStream_;
+	private static final int MESSAGE_INDEX_1 = 1;
 	
-	NonAggregatingAckingTransformBolt(String stream) {
-		outStream_ = stream;
-	}
+	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
 	
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
@@ -30,21 +26,27 @@ public class NonAggregatingAckingTransformBolt extends AbstractAckingBaseRichBol
 
 	@Override
 	public void customExecute(Tuple tuple) {
-
-		Utils.sleep(100);
-
-		String sentence = tuple.getString(MESSAGE_INDEX);
-		if(sentence != null && !sentence.isEmpty()) {
-			emitTupleOnStream(tuple, new Values(sentence.concat("!")), outStream_);
-		}
 		
+		// just like that
+		Utils.sleep(100);
+		
+		// As Spout is sending directly to this bolt and it provides no
+		// other fancy stuff other than the message
+		// which is a simple string in this case.
+		String word = tuple.getString(MESSAGE_INDEX_1);
+		
+		Integer count = 1;
+		if(counts_.containsKey(word)) {
+			count += counts_.get(word);
+		}
+		counts_.put(word, count);
+		
+		System.out.println("Super Count for characer {" + word + "} -> count {" + count + "}");
 	}
 
 	@Override
 	public void customDeclareOutputFields(
 			AckingOutputFieldsDeclarer declarer) {
-		declarer.declareStream(outStream_, new Fields("word"));
-		declarer.declare(new Fields("word"));
 	}
 	
 }

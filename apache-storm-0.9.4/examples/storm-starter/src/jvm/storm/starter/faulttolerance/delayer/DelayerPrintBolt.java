@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +10,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingPrintBolt extends BaseRichBolt {
+public class DelayerPrintBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming

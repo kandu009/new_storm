@@ -1,6 +1,6 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer;
 
-import storm.starter.faulttolerance.SimpleAckingWordCountTopology2;
+import storm.starter.faulttolerance.wordcount.acking.AckingWordCountTopology2;
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
@@ -10,23 +10,22 @@ import backtype.storm.topology.TopologyBuilder;
  * @author rkandur
  *
  *         another use case of Per Edge Acking topology. using this to conduct
- *         experiments This just adds intentional delays, but there is no
- *         aggregation of data that is being done.
+ *         experiments This is more easier to realize as a topology which can
+ *         have intentional delays.
  * 
- *         This is basically to see if the acknowledgement's are getting delayed
- *         by a polynomial order of time which is the case with
- *         aggregation+delayed topology like
- *         {@link SimpleAckingWordCountTopology2}
+ *         difference between {@link AckingWordCountTopology2} and this is here
+ *         we are just using storm's per topology timeout and
+ *         {@link AckingWordCountTopology2} is using per edge timeout
  * 
  */
-public class NonAggregatingAckingDelayerTopology2 {
+public class DelayerTopology2 {
 
 	private static final String SPOUT_TRANSFORM_STREAM = "sts";
 	private static final String TRANSFORM_DELAYER_STREAM = "tds";
 	private static final String DELAYER_PRINT_STREAM = "dps";
 
 	private static final String SPOUT = "s";
-	private static final String TRANSFORMER_BOLT = "tb";
+	private static final String TRANSFORM_BOLT = "tb";
 	private static final String DELAYER_BOLT = "db";
 	private static final String PRINTER_BOLT = "pb";
 
@@ -39,10 +38,6 @@ public class NonAggregatingAckingDelayerTopology2 {
 		int transformerParalellism = 2;
 		int delayerParalellism = 8;
 		int printerParalellism = 3;
-
-		long transformDelayTimeout = 300000L;
-		long delayPrintTimeout = 250000L;
-		long defaultPerEdgeTimeout = 100L;
 		
 		boolean useStormTimeout = true;
 		
@@ -66,18 +61,6 @@ public class NonAggregatingAckingDelayerTopology2 {
 			}
 			argSize--;
 			if(argSize > 0) {
-				transformDelayTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
-				delayPrintTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
-				defaultPerEdgeTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
 				useStormTimeout = args[args.length-argSize].toLowerCase().equals("true") ? true : false;
 			}
 			argSize--;
@@ -91,29 +74,25 @@ public class NonAggregatingAckingDelayerTopology2 {
 			
 		}
 
-		NonAggregatingAckingRandomWordSpout spout = new NonAggregatingAckingRandomWordSpout(SPOUT_TRANSFORM_STREAM);
-		NonAggregatingAckingTransformBolt transformBolt = new NonAggregatingAckingTransformBolt(TRANSFORM_DELAYER_STREAM);
-		NonAggregatingAckingDelayerBolt delayerBolt = new NonAggregatingAckingDelayerBolt(DELAYER_PRINT_STREAM);
-		NonAggregatingAckingPrintBolt printBolt = new NonAggregatingAckingPrintBolt();
+		DelayerRandomWordSpout spout = new DelayerRandomWordSpout(SPOUT_TRANSFORM_STREAM);
+		DelayerTransformBolt transformBolt = new DelayerTransformBolt(TRANSFORM_DELAYER_STREAM);
+		DelayerBolt delayerBolt = new DelayerBolt(DELAYER_PRINT_STREAM);
+		DelayerPrintBolt printBolt = new DelayerPrintBolt();
 		
 		TopologyBuilder builder = new TopologyBuilder();
 
 		builder.setSpout(SPOUT, spout, spoutParalellism);
 
-		builder.setBolt(TRANSFORMER_BOLT, transformBolt, transformerParalellism)
+		builder.setBolt(TRANSFORM_BOLT, transformBolt, transformerParalellism)
 				.shuffleGrouping(SPOUT, SPOUT_TRANSFORM_STREAM);
 
 		builder.setBolt(DELAYER_BOLT, delayerBolt, delayerParalellism)
-				.shuffleGrouping(TRANSFORMER_BOLT, TRANSFORM_DELAYER_STREAM);
+				.shuffleGrouping(TRANSFORM_BOLT, TRANSFORM_DELAYER_STREAM);
 
 		builder.setBolt(PRINTER_BOLT, printBolt, printerParalellism).shuffleGrouping(
 				DELAYER_BOLT, DELAYER_PRINT_STREAM);
 
-		builder.addStreamTimeout(TRANSFORMER_BOLT, DELAYER_BOLT, TRANSFORM_DELAYER_STREAM, transformDelayTimeout)
-				.addStreamTimeout(DELAYER_BOLT, PRINTER_BOLT, DELAYER_PRINT_STREAM, delayPrintTimeout);
-
 		Config conf = new Config();
-		conf.setDefaultPerEdgeTimeout(defaultPerEdgeTimeout);
 		conf.setUseStormTimeoutMechanism(useStormTimeout);
 
 		if (args != null && args.length > 0) {

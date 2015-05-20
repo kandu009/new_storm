@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance.noaggregation;
+package storm.starter.faulttolerance.delayer;
 
 import java.util.Map;
 import java.util.Random;
@@ -12,7 +12,7 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class NonAggregatingTransformBolt extends BaseRichBolt {
+public class DelayerTransformBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming
@@ -22,7 +22,7 @@ public class NonAggregatingTransformBolt extends BaseRichBolt {
 	Boolean enableStormsTimeoutMechanism_;
 	OutputCollector collector_;
 	
-	NonAggregatingTransformBolt(String stream) {
+	DelayerTransformBolt(String stream) {
 		outStream_ = stream;
 	}
 	
