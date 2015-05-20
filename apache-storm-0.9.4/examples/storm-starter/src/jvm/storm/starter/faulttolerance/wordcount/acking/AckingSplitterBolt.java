@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.wordcount.acking;
 
 import java.util.Map;
 import java.util.Random;

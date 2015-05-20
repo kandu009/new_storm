@@ -1,5 +1,6 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.wordcount;
 
+import storm.starter.faulttolerance.wordcount.acking.AckingWordCountTopology2;
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
@@ -12,13 +13,12 @@ import backtype.storm.topology.TopologyBuilder;
  *         experiments This is more easier to realize as a topology which can
  *         have intentional delays.
  * 
- *         difference between {@link AckingWordCountTopology1} and this is here
- *         we are adding intentional delays while data is transmitted kind of
- *         simulating the delays due to windowed aggregation sort of
- *         applications
+ *         difference between {@link AckingWordCountTopology2} and this is here
+ *         we are just using storm's per topology timeout and
+ *         {@link AckingWordCountTopology2} is using per edge timeout
  * 
  */
-public class AckingWordCountTopology2 {
+public class RegularWordCountTopology2 {
 
 	private static final String SPOUT_SPLITTER_STREAM = "spoutSplitterStream";
 	private static final String SPLITTER_EDGEAGGREGATOR_STREAM = "splitterEdgeAggregatorStream";
@@ -41,11 +41,6 @@ public class AckingWordCountTopology2 {
 		int edgeParalellism = 8;
 		int centreParalellism = 6;
 		int printerParalellism = 3;
-
-		long splitEdgeTimeout = 350000L;
-		long edgeCentreTimeout = 300000L;
-		long centrePrintTimeout = 250000L;
-		long defaultPerEdgeTimeout = 100L;
 		
 		boolean useStormTimeout = true;
 		
@@ -73,22 +68,6 @@ public class AckingWordCountTopology2 {
 			}
 			argSize--;
 			if(argSize > 0) {
-				splitEdgeTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
-				edgeCentreTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
-				centrePrintTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
-				defaultPerEdgeTimeout = Long.parseLong(args[args.length-argSize]);
-			}
-			argSize--;
-			if(argSize > 0) {
 				useStormTimeout = args[args.length-argSize].toLowerCase().equals("true") ? true : false;
 			}
 			argSize--;
@@ -102,18 +81,17 @@ public class AckingWordCountTopology2 {
 			
 		}
 
-		AckingRandomSentenceSpout spout = new AckingRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
-		AckingSplitterBolt splitterBolt = new AckingSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
-		AckingEdgeAggregatorBolt edAggregatorBolt = new AckingEdgeAggregatorBolt(EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
-		AckingCentralAggregatorBolt centralAggregatorBolt = new AckingCentralAggregatorBolt(CENTRALAGGREGATOR_PRINT_STREAM);
-		AckingPrintBolt printBolt = new AckingPrintBolt();
+		RegularRandomSentenceSpout spout = new RegularRandomSentenceSpout(SPOUT_SPLITTER_STREAM);
+		RegularSplitterBolt splitterBolt = new RegularSplitterBolt(SPLITTER_EDGEAGGREGATOR_STREAM);
+		RegularEdgeAggregatorBolt edAggregatorBolt = new RegularEdgeAggregatorBolt(EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM);
+		RegularCentralAggregatorBolt centralAggregatorBolt = new RegularCentralAggregatorBolt(CENTRALAGGREGATOR_PRINT_STREAM);
+		RegularPrintBolt printBolt = new RegularPrintBolt();
 		
 		TopologyBuilder builder = new TopologyBuilder();
 
 		builder.setSpout(SPOUT, spout, spoutParalellism);
 
-		builder.setBolt(SPLITER_BOLT, splitterBolt, splitterParalellism).shuffleGrouping(SPOUT,
-				SPOUT_SPLITTER_STREAM);
+		builder.setBolt(SPLITER_BOLT, splitterBolt, splitterParalellism).shuffleGrouping(SPOUT, SPOUT_SPLITTER_STREAM);
 
 		builder.setBolt(EDGEAGGREGATOR_BOLT, edAggregatorBolt, edgeParalellism)
 				.shuffleGrouping(SPLITER_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM);
@@ -124,12 +102,7 @@ public class AckingWordCountTopology2 {
 		builder.setBolt(PRINTER_BOLT, printBolt, printerParalellism).shuffleGrouping(
 				CENTRALAGGREGATOR_BOLT, CENTRALAGGREGATOR_PRINT_STREAM);
 
-		builder.addStreamTimeout(SPLITER_BOLT, EDGEAGGREGATOR_BOLT, SPLITTER_EDGEAGGREGATOR_STREAM, splitEdgeTimeout)	// 50
-			.addStreamTimeout(EDGEAGGREGATOR_BOLT, CENTRALAGGREGATOR_BOLT, EDGEAGGREGATOR_CENTRALAGGREGATOR_STREAM, edgeCentreTimeout)	//2500
-			.addStreamTimeout(CENTRALAGGREGATOR_BOLT, PRINTER_BOLT, CENTRALAGGREGATOR_PRINT_STREAM, centrePrintTimeout);	//4200
-
 		Config conf = new Config();
-		conf.setDefaultPerEdgeTimeout(defaultPerEdgeTimeout);
 		conf.setUseStormTimeoutMechanism(useStormTimeout);
 
 		if (args != null && args.length > 0) {

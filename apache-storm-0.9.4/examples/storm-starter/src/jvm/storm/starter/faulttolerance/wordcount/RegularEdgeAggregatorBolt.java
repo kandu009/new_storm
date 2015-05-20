@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.wordcount;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,16 +8,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.AckingOutputFieldsDeclarer;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
+public class RegularEdgeAggregatorBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -43,7 +43,7 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX = 1;
+	private static final int MESSAGE_INDEX = 0;
 	
 	// output stream on which tuples will be emitted from this bolt
 	private String outputStream_;
@@ -59,8 +59,10 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 
 	// word vs List<anchors>
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
+	private OutputCollector collector_;
+	Boolean enableStormsTimeoutMechanism_;
 
-	public AckingEdgeAggregatorBolt(String stream) {
+	public RegularEdgeAggregatorBolt(String stream) {
 		outputStream_ = stream;
 	}
 	
@@ -93,7 +95,11 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 				}
 				for (String word : counts.keySet()) {
 					List<Tuple> anchors = wordVsAnchors_.containsKey(word) ? wordVsAnchors_.remove(word) : new ArrayList<Tuple>();
-					emitTupleOnStream(anchors, new Values(word, counts.get(word)), outputStream_);
+					if (enableStormsTimeoutMechanism_) {
+						collector_.emit(outputStream_, anchors, new Values(word, counts.get(word)));
+					} else {
+						collector_.emit(outputStream_, new Values(word, counts.get(word)));
+					}
 					updatePushTime = true;
 				}
 				// reset the counts after pushing
@@ -106,17 +112,17 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	}
 
 	@Override
-	public void customPrepare(Map conf, TopologyContext context,
-			OutputCollector collector) {
+	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		delayVsLastPushTime_.put(Delays.high.delay_, System.currentTimeMillis());
 		delayVsLastPushTime_.put(Delays.moderate.delay_, System.currentTimeMillis());
 		delayVsLastPushTime_.put(Delays.low.delay_, System.currentTimeMillis());
 		_rand = new Random();
+		collector_ = collector;
+		enableStormsTimeoutMechanism_ = context.enableStormDefaultTimeoutMechanism();
 	}
 
 	@Override
-	public void customExecute(Tuple tuple) {
-		
+	public void execute(Tuple tuple) {
 		// this is to kind of achieve randomness as emitted by a
 		// realistic source like twitter or some data feed
 		Utils.sleep(Math.abs(_rand.nextInt()) % 500);
@@ -151,13 +157,8 @@ public class AckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	}
 
 	@Override
-	public void customDeclareOutputFields(
-			AckingOutputFieldsDeclarer declarer) {
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declareStream(outputStream_, new Fields("word", "count"));
 		declarer.declare(new Fields("word", "count"));
-	}
-	
-	public int getThisTaskId() {
-		return super.getThisTaskId();
 	}
 }

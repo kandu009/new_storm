@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.wordcount;
 
 import java.util.HashMap;
 import java.util.Map;
