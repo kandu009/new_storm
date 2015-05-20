@@ -1,6 +1,6 @@
 package storm.starter.faulttolerance.delayer.acking;
 
-import storm.starter.faulttolerance.SimpleAckingWordCountTopology2;
+import storm.starter.faulttolerance.simple.wordcount.acking.SimpleAckingWordCountTopology2;
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;

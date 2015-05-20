@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.simple.wordcount;
 
 import java.util.ArrayList;
 import java.util.Arrays;

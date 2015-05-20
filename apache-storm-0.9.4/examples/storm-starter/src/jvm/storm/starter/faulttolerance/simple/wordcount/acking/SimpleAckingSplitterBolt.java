@@ -1,24 +1,27 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.simple.wordcount.acking;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.AckingOutputFieldsDeclarer;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class SimpleAckingPrintBolt extends AbstractAckingBaseRichBolt {
+public class SimpleAckingSplitterBolt extends AbstractAckingBaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX_1 = 1;
-	private static final int MESSAGE_INDEX_2 = 2;
+	private static final int MESSAGE_INDEX = 1;
+	private String outStream_;
 	
-	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
+	SimpleAckingSplitterBolt(String stream) {
+		outStream_ = stream;
+	}
 	
 	@Override
 	public void customPrepare(Map conf, TopologyContext context,
@@ -27,27 +30,31 @@ public class SimpleAckingPrintBolt extends AbstractAckingBaseRichBolt {
 
 	@Override
 	public void customExecute(Tuple tuple) {
-		
-		// just like that
+
+		// this is to kind of achieve randomness as emitted by a
+		// realistic
+		// source like twitter or some data feed
 		Utils.sleep(500);
-		
+
 		// As Spout is sending directly to this bolt and it provides no
 		// other fancy stuff other than the message
 		// which is a simple string in this case.
-		String word = tuple.getString(MESSAGE_INDEX_1);
-		Integer count = tuple.getInteger(MESSAGE_INDEX_2);
+		String sentence = tuple.getString(MESSAGE_INDEX);
 		
-		if(counts_.containsKey(word)) {
-			count += counts_.get(word);
+		if(sentence != null && !sentence.isEmpty()) {
+			String[] words = sentence.split("[* *]+");
+			for (int i = 0; i < words.length; ++i) {
+				emitTupleOnStream(tuple, new Values(words[i]), outStream_);
+			}
 		}
-		counts_.put(word, count);
 		
-		System.out.println("Super Count for characer {" + word + "} -> count {" + count + "}");
 	}
 
 	@Override
 	public void customDeclareOutputFields(
 			AckingOutputFieldsDeclarer declarer) {
+		declarer.declareStream(outStream_, new Fields("word"));
+		declarer.declare(new Fields("word"));
 	}
 	
 }

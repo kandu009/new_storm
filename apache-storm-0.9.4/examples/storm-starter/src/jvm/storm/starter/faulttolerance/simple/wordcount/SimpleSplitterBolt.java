@@ -1,36 +1,45 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.simple.wordcount;
 
 import java.util.Map;
+import java.util.Random;
 
-import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.AckingOutputFieldsDeclarer;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class SimpleAckingSplitterBolt extends AbstractAckingBaseRichBolt {
+public class SimpleSplitterBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX = 1;
+	private static final int MESSAGE_INDEX = 0;
 	private String outStream_;
+	Boolean enableStormsTimeoutMechanism_;
+	OutputCollector collector_;
 	
-	SimpleAckingSplitterBolt(String stream) {
+	SimpleSplitterBolt(String stream) {
 		outStream_ = stream;
 	}
 	
 	@Override
-	public void customPrepare(Map conf, TopologyContext context,
+	public void prepare(Map stormConf, TopologyContext context,
 			OutputCollector collector) {
+		new Random();
+		enableStormsTimeoutMechanism_ = context.enableStormDefaultTimeoutMechanism();
+		collector_ = collector;
 	}
 
 	@Override
-	public void customExecute(Tuple tuple) {
-
+	public void execute(Tuple tuple) {
+		
+		if (enableStormsTimeoutMechanism_) {
+			collector_.ack(tuple);
+		}
 		// this is to kind of achieve randomness as emitted by a
 		// realistic
 		// source like twitter or some data feed
@@ -44,15 +53,17 @@ public class SimpleAckingSplitterBolt extends AbstractAckingBaseRichBolt {
 		if(sentence != null && !sentence.isEmpty()) {
 			String[] words = sentence.split("[* *]+");
 			for (int i = 0; i < words.length; ++i) {
-				emitTupleOnStream(tuple, new Values(words[i]), outStream_);
+				if (enableStormsTimeoutMechanism_) {
+					collector_.emit(outStream_, tuple, new Values(words[i]));
+				} else {
+					collector_.emit(outStream_, new Values(words[i]));
+				}
 			}
 		}
-		
 	}
 
 	@Override
-	public void customDeclareOutputFields(
-			AckingOutputFieldsDeclarer declarer) {
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declareStream(outStream_, new Fields("word"));
 		declarer.declare(new Fields("word"));
 	}

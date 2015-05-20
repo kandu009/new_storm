@@ -1,4 +1,4 @@
-package storm.starter.faulttolerance;
+package storm.starter.faulttolerance.simple.wordcount;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -6,16 +6,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import backtype.storm.task.AbstractAckingBaseRichBolt;
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.AckingOutputFieldsDeclarer;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import backtype.storm.utils.Utils;
 
-public class SimpleAckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
+public class SimpleEdgeAggregatorBolt extends BaseRichBolt {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -23,56 +23,63 @@ public class SimpleAckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	
 	// this just gives you index in tuple which holds the incoming
 	// message
-	private static final int MESSAGE_INDEX = 1;
+	private static final int MESSAGE_INDEX = 0;
 	
 	// output stream on which tuples will be emitted from this bolt
 	private String outputStream_;
 	
-	// lastEmitTime 
-	private long lastPushTime_ = System.currentTimeMillis();
-
-	// delay vs Counts of words and its Tuples which are used to later
-	// fail if ack is not received by PerEdgeAcking Storm
-	// delay vs <word, count>
+	// Counts of words and its Tuples which are used to later
+	// <word, count>
 	HashMap<String, Integer> counts_ = new HashMap<String, Integer>();
-
 	// word vs List<anchors>
 	private HashMap<String, List<Tuple>> wordVsAnchors_ = new HashMap<String, List<Tuple>>();
+	
+	private OutputCollector collector_;
+	Boolean enableStormsTimeoutMechanism_;
+	private long lastPushTime_ = System.currentTimeMillis();
 
-	public SimpleAckingEdgeAggregatorBolt(String stream) {
+	public SimpleEdgeAggregatorBolt(String stream) {
 		outputStream_ = stream;
 	}
 	
 	public void pushUpdates() {
 		long now = System.currentTimeMillis();
-			// push updates only if last push time is more than delay
-			boolean updatePushTime = false;
-			if (now - lastPushTime_ >= WINDOW_LENGTH) {
-				for (String word : counts_.keySet()) {
+		// push updates only if last push time is more than delay
+		boolean updatePushTime = false;
+		if (now - lastPushTime_ >= WINDOW_LENGTH) {
+			for (String word : counts_.keySet()) {
+				if (enableStormsTimeoutMechanism_) {
 					List<Tuple> anchors = new ArrayList<Tuple>();
 					if(wordVsAnchors_.containsKey(word)) {
 						anchors = wordVsAnchors_.get(word);
 					}
-					emitTupleOnStream(anchors, new Values(word, counts_.get(word)), outputStream_);
-					wordVsAnchors_.remove(word);
-					updatePushTime = true;
-					
+					collector_.emit(outputStream_, anchors, new Values(word, counts_.get(word)));
+				} else {
+					collector_.emit(outputStream_, new Values(word, counts_.get(word)));
 				}
-				// reset the counts after pushing
-				if(updatePushTime) {
-					counts_.clear();
-					lastPushTime_ = now;
-				}
+				wordVsAnchors_.remove(word);
+				updatePushTime = true;
 			}
+			// reset the counts after pushing
+			if(updatePushTime) {
+				counts_.clear();
+				lastPushTime_ = now;
+			}
+		}
 	}
 
 	@Override
-	public void customPrepare(Map conf, TopologyContext context,
-			OutputCollector collector) {
+	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
+		collector_ = collector;
+		enableStormsTimeoutMechanism_ = context.enableStormDefaultTimeoutMechanism();
 	}
 
 	@Override
-	public void customExecute(Tuple tuple) {
+	public void execute(Tuple tuple) {
+		
+		if (enableStormsTimeoutMechanism_) {
+			collector_.ack(tuple);
+		}
 		
 		// this is to kind of achieve randomness as emitted by a
 		// realistic source like twitter or some data feed
@@ -90,9 +97,10 @@ public class SimpleAckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 		wordVsAnchors_.put(word, l);
 		
 		// updating the count of the word received in the
-		// delayVsCounts_ structure. this is used to push out the
+		// this is used to push out the
 		// counts when the push was >= delay time, as done is
 		// pushUpdates()
+		
 		Integer count = 1;
 		if(counts_.containsKey(word)) {
 			count += counts_.get(word);
@@ -103,13 +111,8 @@ public class SimpleAckingEdgeAggregatorBolt extends AbstractAckingBaseRichBolt {
 	}
 
 	@Override
-	public void customDeclareOutputFields(
-			AckingOutputFieldsDeclarer declarer) {
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
 		declarer.declareStream(outputStream_, new Fields("word", "count"));
 		declarer.declare(new Fields("word", "count"));
-	}
-	
-	public int getThisTaskId() {
-		return super.getThisTaskId();
 	}
 }
