@@ -104,11 +104,10 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 
 		// If the user decides to use Storm's default timeout mechanism, then
 		// ack the tuple in Storm way
-		LOG.info("Received tuple {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
+		LOG.debug("Received tuple {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
 		if(enableStormDefaultTimeout_) {
 			// RK NOTE: adding this only to check if failures are correctly
 			// identified by default storm topology 
-			LOG.info("Storm acking {" + tuple.getString(0) + "} in task {" + context_.getThisTaskId() + "}");
 			collector_.ack(tuple);
 		}
 		
@@ -148,7 +147,7 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		Values vals = new Values(tupleId);
 		vals.add(ackMsg.toString());
 		collector_.emitDirect(tuple.getSourceTask(), ackingStreamId, vals);
-		LOG.info("Sending an ack message for the tuple with ID {" + tuple.getValue(TUPLE_ID_INDEX).toString() +
+		LOG.debug("Sending an ack message for the tuple with ID {" + tuple.getValue(TUPLE_ID_INDEX).toString() +
 				"} on stream {" + ackingStreamId +"} to taskID {" + tuple.getSourceTask() +"}");
 	}
 
@@ -162,8 +161,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 		// we will not use tupleId for acking messages. 
 		String ack = tuple.getValue(ACTUAL_MESSAGE_INDEX).toString();
 		String[] ackToks = ack.split("[*"+ACK_MESSAGE_DELIMITER+"*]+");
-		
-		LOG.info("HandleAckMessage {" + ack + "} in task {" + context_.getThisTaskId() + "}");
 		
 		if(ACK_MESSAGE_TOKEN_LENGTH <= ackToks.length) {
 			String tupleKey = ack.substring(ack.indexOf("_")+1);
@@ -229,11 +226,11 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			if(enableStormDefaultTimeout_) {
 				// is true in execute() method
 				collector_.emit(streamId, anchors, newVals);
-				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId
+				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId
 						+ "} from task {" + context_.getThisTaskId()
 						+ "}, source tuple ID's {" + srcTupleId.toString()+ "}");
 			} else {
-				LOG.info("Emitting tuple {" + tupleId + "} on {" + streamId
+				LOG.debug("Emitting tuple {" + tupleId + "} on {" + streamId
 						+ "} from task {" + context_.getThisTaskId()
 						+ "}, source tuple ID's {" + srcTupleId.toString()+ "}");
 				collector_.emit(streamId, newVals);
@@ -244,10 +241,6 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(timeout);
 			rmap.put(tupleId, anchors);
 			ackTracker_.put(timeout, rmap);
-			LOG.info("Adding tuple {" + tupleId
-					+ "} to the tracker with sourceTuples {" + srcTupleId
-					+ "} timeout Identifier {" + componentId_ + "," + targetId
-					+ "," + streamId + "} and timeout {" + timeout + "}");
 		}
 		
 	}
@@ -291,15 +284,12 @@ public abstract class AckingBaseRichBolt extends BaseRichBolt {
 	public abstract void customDeclareOutputFields(AckingOutputFieldsDeclarer declarer);
 	
 	private void findAndAckTuple(String tupleKey) {
-		LOG.info("findAndAckTuple {" + tupleKey + "} in task {" + context_.getThisTaskId() + "}");
 		for(Long at : ackTracker_.keySet()) {
 			RotatingMap<String, List<Tuple>> rmap = ackTracker_.get(at);
 			if(rmap.containsKey(tupleKey)) {
-				LOG.info("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
+				LOG.debug("Acking Tuple with key {" + tupleKey + "} in taskId {" + context_.getThisTaskId() + "}");
 				rmap.remove(tupleKey);
 				ackTracker_.put(at, rmap);
-			} else {
-				LOG.info("Tuple {" + tupleKey + "} is not present in {" + at + "} in taskId {" + context_.getThisTaskId() + "}");
 			}
 		}
 	}
